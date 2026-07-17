@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bajrang Wire India — Payment Tracker</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap');
+
+:root{
+  --bg-deep:#07060f;
+  --bg-panel:rgba(24,20,46,0.55);
+  --bg-panel-2:rgba(34,28,64,0.6);
+  --violet:#8B5CF6;
+  --violet-bright:#B79BFF;
+  --cyan:#22D3EE;
+  --pink:#F472B6;
+  --success:#34E7A6;
+  --warning:#FBBF4B;
+  --danger:#FB7185;
+  --text-primary:#F3F1FF;
+  --text-secondary:#9C97C4;
+  --border:rgba(255,255,255,0.09);
+  --glow-violet:rgba(139,92,246,0.45);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{ background:var(--bg-deep); }
+body{
+  font-family:'Inter',sans-serif;
+  color:var(--text-primary);
+  min-height:100vh;
+  padding:28px;
+  position:relative;
+  overflow-x:hidden;
+  background:var(--bg-deep);
+}
+.scene{
+  position:fixed; inset:0; z-index:-1; overflow:hidden;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% -5%, rgba(139,92,246,0.30), transparent 60%),
+    radial-gradient(ellipse 55% 35% at 85% 0%, rgba(244,114,182,0.22), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 50% 110%, rgba(34,211,238,0.18), transparent 60%),
+    var(--bg-deep);
+}
+.grid-floor{
+  position:absolute; left:-50%; right:-50%; bottom:-10%; height:70%;
+  background-image:
+    linear-gradient(rgba(139,92,246,0.35) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139,92,246,0.35) 1px, transparent 1px);
+  background-size:48px 48px;
+  transform:perspective(600px) rotateX(62deg);
+  transform-origin:bottom;
+  mask-image:linear-gradient(to top, rgba(0,0,0,0.9), transparent 85%);
+  -webkit-mask-image:linear-gradient(to top, rgba(0,0,0,0.9), transparent 85%);
+  animation:gridDrift 14s linear infinite;
+}
+@keyframes gridDrift{ from{ background-position:0 0, 0 0; } to{ background-position:0 48px, 48px 0; } }
+.orb{ position:absolute; border-radius:50%; filter:blur(60px); opacity:0.5; animation:float 12s ease-in-out infinite; }
+.orb1{ width:280px; height:280px; background:var(--violet); top:-60px; left:8%; }
+.orb2{ width:220px; height:220px; background:var(--cyan); top:20%; right:6%; animation-delay:2.5s; }
+.orb3{ width:200px; height:200px; background:var(--pink); bottom:8%; left:35%; animation-delay:5s; }
+@keyframes float{ 0%,100%{ transform:translateY(0) translateX(0); } 50%{ transform:translateY(-24px) translateX(14px); } }
+
+h1,h2,h3,.display{font-family:'Space Grotesk',sans-serif; letter-spacing:0.01em;}
+.glass{ background:linear-gradient(155deg,var(--bg-panel),var(--bg-panel-2)); border:1px solid var(--border); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); }
+
+.header{ display:flex; align-items:center; gap:22px; padding:22px 26px; border-radius:18px; margin-bottom:20px; box-shadow:0 25px 60px -30px rgba(0,0,0,0.75); position:relative; overflow:hidden; }
+.header::after{ content:""; position:absolute; inset:0; background:linear-gradient(120deg, transparent 30%, rgba(139,92,246,0.10) 45%, rgba(34,211,238,0.10) 55%, transparent 70%); pointer-events:none; }
+.logo-3d{
+  flex-shrink:0;
+  perspective:600px;
+  transform-style:preserve-3d;
+  animation:logoFloat 5s ease-in-out infinite;
+  transition:transform .2s ease;
+}
+.logo-3d:hover{
+  transform:perspective(600px) rotateY(-12deg) rotateX(5deg) translateZ(10px) scale(1.06);
+}
+.logo-3d img{
+  display:block; height:44px; width:auto;
+}
+@keyframes logoFloat{
+  0%,100%{ transform:perspective(600px) rotateY(0deg) rotateX(0deg) translateZ(0); }
+  50%{ transform:perspective(600px) rotateY(-4deg) rotateX(2deg) translateZ(6px); }
+}
+.header-text .display{font-size:24px; font-weight:700; text-transform:uppercase; background:linear-gradient(90deg,var(--violet-bright),var(--cyan)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
+.header-text .sub{font-size:13px; color:var(--cyan); margin-top:4px; font-weight:500; letter-spacing:0.05em; text-transform:uppercase;}
+.header-text .ceo{font-size:12px; color:var(--text-secondary); margin-top:6px;}
+.header-text .ceo b{color:var(--violet-bright);}
+.shared-note{ font-size:12.5px; color:var(--violet-bright); background:rgba(139,92,246,0.10); border:1px solid rgba(139,92,246,0.35); border-radius:10px; padding:9px 14px; margin-bottom:20px; }
+
+.stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-bottom:22px; }
+.stat-card{ border-radius:16px; padding:18px 20px; transition:box-shadow .2s ease; box-shadow:0 20px 40px -24px rgba(0,0,0,0.7); }
+.stat-card:hover{ box-shadow:0 24px 50px -20px rgba(0,0,0,0.8), 0 0 30px -8px var(--glow-violet); }
+.stat-card .label{font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-secondary); font-weight:600;}
+.stat-card .value{font-family:'Space Grotesk',sans-serif; font-size:26px; margin-top:8px; font-weight:600;}
+.stat-card.copper .value{color:var(--violet-bright); text-shadow:0 0 18px var(--glow-violet);}
+.stat-card.danger .value{color:var(--danger); text-shadow:0 0 18px rgba(251,113,133,0.4);}
+.stat-card.success .value{color:var(--success); text-shadow:0 0 18px rgba(52,231,166,0.35);}
+
+.toolbar{ display:flex; gap:12px; align-items:center; margin-bottom:18px; flex-wrap:wrap; }
+input, select, textarea{ font-family:'Inter',sans-serif; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text-primary); border-radius:10px; padding:10px 12px; font-size:13.5px; outline:none; }
+input:focus, select:focus, textarea:focus{ border-color:var(--violet); box-shadow:0 0 0 3px rgba(139,92,246,0.18); }
+.search-input{ flex:1; min-width:200px; }
+.btn{ font-family:'Inter',sans-serif; font-weight:600; font-size:13.5px; padding:10px 18px; border-radius:10px; border:none; cursor:pointer; transition:transform .1s ease, filter .15s ease, box-shadow .15s ease; }
+.btn:active{ transform:translateY(1px); }
+.btn-primary{ background:linear-gradient(135deg,var(--violet-bright),var(--violet) 55%,var(--cyan)); color:#0c0620; box-shadow:0 10px 24px -10px var(--glow-violet);}
+.btn-primary:hover{ filter:brightness(1.1); }
+.btn-ghost{ background:rgba(255,255,255,0.05); color:var(--violet-bright); border:1px solid var(--border); }
+.btn-ghost:hover{ border-color:var(--violet); background:rgba(139,92,246,0.1); }
+.btn-pay{ background:rgba(52,231,166,0.15); color:var(--success); border:1px solid rgba(52,231,166,0.4); }
+.btn-pay:hover{ background:rgba(52,231,166,0.25); }
+.btn-icon{ padding:7px 10px; font-size:12px; }
+
+.table-wrap{ border-radius:18px; overflow:hidden; box-shadow:0 25px 60px -30px rgba(0,0,0,0.8); }
+table{ width:100%; border-collapse:collapse; font-size:13px; }
+thead th{ text-align:left; padding:13px 14px; background:rgba(255,255,255,0.04); color:var(--text-secondary); font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em; border-bottom:1px solid var(--border); }
+tbody td{ padding:13px 14px; border-bottom:1px solid var(--border); vertical-align:middle; }
+tbody tr:hover{ background:rgba(139,92,246,0.08); }
+tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
+.cust-name{ font-weight:600; color:var(--text-primary); font-size:14px; }
+.mono{ font-family:'JetBrains Mono',monospace; font-variant-numeric:tabular-nums; font-size:13px; }
+.badge{ display:inline-block; padding:4px 10px; border-radius:20px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; }
+.badge.paid{ background:rgba(52,231,166,0.15); color:var(--success); }
+.badge.partial{ background:rgba(251,191,75,0.15); color:var(--warning); }
+.badge.pending{ background:rgba(156,151,196,0.15); color:var(--text-secondary); }
+.badge.overdue{ background:rgba(251,113,133,0.18); color:var(--danger); }
+.next-pay .date{ font-weight:600; }
+.next-pay .note{ font-size:11.5px; color:var(--text-secondary); }
+.row-actions{ display:flex; gap:6px; flex-wrap:wrap; }
+.empty-state{ text-align:center; padding:60px 20px; color:var(--text-secondary); }
+.empty-state .display{ font-size:20px; color:var(--violet-bright); margin-bottom:6px; }
+
+.modal-backdrop{ position:fixed; inset:0; background:rgba(5,3,14,0.75); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:50; padding:20px; }
+.modal-backdrop.open{ display:flex; }
+.modal{ border-radius:20px; width:100%; max-width:480px; padding:26px; box-shadow:0 50px 100px -30px rgba(0,0,0,0.85), 0 0 60px -20px var(--glow-violet); max-height:88vh; overflow-y:auto; }
+.modal h3{ font-size:20px; margin-bottom:18px; background:linear-gradient(90deg,var(--violet-bright),var(--cyan)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; display:inline-block; }
+.form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.form-grid .full{ grid-column:1/-1; }
+.field label{ display:block; font-size:11.5px; color:var(--text-secondary); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em; }
+.field input, .field select{ width:100%; }
+.modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:22px; }
+.balance-preview{ font-size:13px; color:var(--text-secondary); margin-top:4px; }
+.balance-preview b{ color:var(--violet-bright); }
+
+.toast{ position:fixed; bottom:24px; right:24px; background:linear-gradient(135deg,var(--bg-panel-2),var(--bg-panel)); border:1px solid var(--violet); color:var(--text-primary); padding:12px 18px; border-radius:12px; font-size:13px; box-shadow:0 15px 40px -10px rgba(0,0,0,0.7); opacity:0; transform:translateY(10px); transition:all .25s ease; z-index:60; }
+.toast.show{ opacity:1; transform:translateY(0); }
+
+@media (max-width:820px){
+  .stats{ grid-template-columns:1fr 1fr; }
+  .form-grid{ grid-template-columns:1fr; }
+  table{ font-size:12px; }
+  thead th, tbody td{ padding:10px 8px; }
+}
+</style>
+</head>
+<body>
+
+<div class="scene">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+  <div class="grid-floor"></div>
+</div>
+
+<div class="header glass">
+  <div class="logo-3d">
+    <img src="data:image/png;base64,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" alt="Bajrang logo">
+  </div>
+  <div class="header-text">
+    <div class="display">Wire India Pvt. Ltd.</div>
+    <div class="sub">Company Payment Tracker</div>
+    <div class="ceo">Prepared for <b>Gajendra Maheshwari</b>, Chief Executive Officer</div>
+  </div>
+</div>
+<div class="shared-note">🔗 Shared team data — sabhi employees jo ye link kholenge unhe same data dikhega.</div>
+
+<div class="stats">
+  <div class="stat-card copper glass"><div class="label">Total Amount (Sab Companies)</div><div class="value" id="statTotal">₹0</div></div>
+  <div class="stat-card success glass"><div class="label">Total Paid Till Now</div><div class="value" id="statPaid">₹0</div></div>
+  <div class="stat-card danger glass"><div class="label">Baaki Balance</div><div class="value" id="statBalance">₹0</div></div>
+</div>
+
+<div class="toolbar">
+  <input class="search-input" id="searchInput" placeholder="Company search karein...">
+  <button class="btn btn-primary" id="addBtn">+ Nayi Company</button>
+</div>
+
+<div class="table-wrap glass">
+  <table>
+    <thead>
+      <tr>
+        <th>Company</th>
+        <th>Total Amount</th>
+        <th>Paid</th>
+        <th>Balance</th>
+        <th>Status</th>
+        <th>Next Payment</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+  <div class="empty-state" id="emptyState" style="display:none;">
+    <div class="display">Koi entry nahi hai</div>
+    <div>"+ Nayi Company" par click karke pehli entry add karein.</div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal glass">
+    <h3 id="modalTitle">Nayi Company</h3>
+    <form id="entryForm">
+      <input type="hidden" id="entryId">
+      <div class="form-grid">
+        <div class="field full"><label>Company Name *</label><input id="companyName"></div>
+        <div class="field"><label>Total Amount (₹) *</label><input id="totalAmount" type="number" min="0" step="0.01"></div>
+        <div class="field"><label>Paid Ab Tak (₹)</label><input id="paidAmount" type="number" min="0" step="0.01" value="0"></div>
+        <div class="field"><label>Next Payment Date</label><input id="nextPaymentDate" type="date"></div>
+        <div class="field"><label>Ya Note (e.g. Next Week)</label><input id="nextPaymentNote" placeholder="Next week / Diwali baad..."></div>
+      </div>
+      <div class="balance-preview">Baaki Balance: <b id="balancePreview">₹0</b></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="cancelBtn">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="payModalBackdrop">
+  <div class="modal glass" style="max-width:380px;">
+    <h3>Aaj Ka Payment</h3>
+    <form id="payForm">
+      <input type="hidden" id="payEntryId">
+      <div class="field"><label>Company</label><input id="payCompanyName" disabled></div>
+      <div class="field" style="margin-top:12px;"><label>Aaj Kitna Paid (₹) *</label><input id="payAmount" type="number" min="0.01" step="0.01" required></div>
+      <div class="field" style="margin-top:12px;"><label>Agla Payment Kab (Optional)</label><input id="payNextDate" type="date"></div>
+      <div class="field" style="margin-top:12px;"><label>Ya Note (Optional)</label><input id="payNextNote" placeholder="Next week..."></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="payCancelBtn">Cancel</button>
+        <button type="submit" class="btn btn-primary">Payment Save Karein</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'bajrang-wire-company-payments';
+let entries = [];
+let editingId = null;
+
+const tableBody = document.getElementById('tableBody');
+const emptyState = document.getElementById('emptyState');
+const modalBackdrop = document.getElementById('modalBackdrop');
+const entryForm = document.getElementById('entryForm');
+const payModalBackdrop = document.getElementById('payModalBackdrop');
+const payForm = document.getElementById('payForm');
+const toast = document.getElementById('toast');
+
+function showToast(msg, isError){
+  toast.textContent = msg;
+  toast.style.borderColor = isError ? 'var(--danger)' : 'var(--violet)';
+  toast.classList.add('show');
+  setTimeout(()=> toast.classList.remove('show'), isError ? 4000 : 2200);
+}
+
+window.addEventListener('error', (e)=>{
+  showToast('Error: ' + e.message, true);
+});
+
+if(!window.storage || typeof window.storage.get !== 'function'){
+  showToast('Storage available nahi hai is view me — file ko Claude ke artifact panel me khol kar use karein.', true);
+}
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function fmtMoney(n){ return '₹' + Number(n||0).toLocaleString('en-IN', {maximumFractionDigits:0}); }
+
+function computeStatus(e){
+  const balance = Number(e.totalAmount) - Number(e.paidAmount);
+  if(balance <= 0) return 'paid';
+  if(e.nextPaymentDate && e.nextPaymentDate < todayStr()) return 'overdue';
+  if(Number(e.paidAmount) > 0) return 'partial';
+  return 'pending';
+}
+
+async function loadEntries(){
+  tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-secondary);">Loading...</td></tr>';
+  try{
+    const res = await window.storage.get(STORAGE_KEY, true);
+    entries = res && res.value ? JSON.parse(res.value) : [];
+  }catch(err){ entries = []; }
+  render();
+}
+
+async function persist(){
+  try{
+    const result = await window.storage.set(STORAGE_KEY, JSON.stringify(entries), true);
+    if(!result) showToast('Warning: save nahi ho paya');
+  }catch(err){ showToast('Storage error — changes save nahi hue'); }
+}
+
+function openModal(entry){
+  document.getElementById('modalTitle').textContent = entry ? 'Company Edit Karein' : 'Nayi Company';
+  document.getElementById('entryId').value = entry ? entry.id : '';
+  document.getElementById('companyName').value = entry ? entry.companyName : '';
+  document.getElementById('totalAmount').value = entry ? entry.totalAmount : '';
+  document.getElementById('paidAmount').value = entry ? entry.paidAmount : 0;
+  document.getElementById('nextPaymentDate').value = entry ? entry.nextPaymentDate : '';
+  document.getElementById('nextPaymentNote').value = entry ? entry.nextPaymentNote : '';
+  editingId = entry ? entry.id : null;
+  updateBalancePreview();
+  modalBackdrop.classList.add('open');
+}
+function closeModal(){ modalBackdrop.classList.remove('open'); entryForm.reset(); editingId = null; }
+
+function updateBalancePreview(){
+  const total = parseFloat(document.getElementById('totalAmount').value) || 0;
+  const paid = parseFloat(document.getElementById('paidAmount').value) || 0;
+  document.getElementById('balancePreview').textContent = fmtMoney(total - paid);
+}
+document.getElementById('totalAmount').addEventListener('input', updateBalancePreview);
+document.getElementById('paidAmount').addEventListener('input', updateBalancePreview);
+
+document.getElementById('addBtn').addEventListener('click', ()=> openModal(null));
+document.getElementById('cancelBtn').addEventListener('click', closeModal);
+modalBackdrop.addEventListener('click', (e)=>{ if(e.target === modalBackdrop) closeModal(); });
+
+entryForm.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const companyName = document.getElementById('companyName').value.trim();
+  const totalAmountRaw = document.getElementById('totalAmount').value;
+
+  if(!companyName){
+    showToast('Company Name likhna zaroori hai', true);
+    document.getElementById('companyName').focus();
+    return;
+  }
+  if(totalAmountRaw === '' || isNaN(parseFloat(totalAmountRaw))){
+    showToast('Total Amount sahi se bharein', true);
+    document.getElementById('totalAmount').focus();
+    return;
+  }
+
+  const data = {
+    id: editingId || 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    companyName: companyName,
+    totalAmount: parseFloat(totalAmountRaw) || 0,
+    paidAmount: parseFloat(document.getElementById('paidAmount').value) || 0,
+    nextPaymentDate: document.getElementById('nextPaymentDate').value,
+    nextPaymentNote: document.getElementById('nextPaymentNote').value.trim()
+  };
+  const previousEntries = entries;
+  if(editingId){
+    entries = entries.map(en => en.id === editingId ? data : en);
+  }else{
+    entries.push(data);
+  }
+  const saveBtn = entryForm.querySelector('button[type="submit"]');
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Saving...';
+  try{
+    const result = await window.storage.set(STORAGE_KEY, JSON.stringify(entries), true);
+    if(!result){
+      entries = previousEntries;
+      showToast('Save nahi ho paya — dobara try karein', true);
+      return;
+    }
+    closeModal();
+    render();
+    showToast('Save ho gaya ✓');
+  }catch(err){
+    entries = previousEntries;
+    showToast('Save error: ' + (err && err.message ? err.message : 'unknown'), true);
+  }finally{
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save';
+  }
+});
+
+async function deleteEntry(id){
+  if(!confirm('Ye company delete karni hai? Wapas nahi aayegi.')) return;
+  entries = entries.filter(e => e.id !== id);
+  await persist();
+  render();
+  showToast('Delete ho gaya');
+}
+
+function openPayModal(id){
+  const entry = entries.find(e => e.id === id);
+  if(!entry) return;
+  document.getElementById('payEntryId').value = id;
+  document.getElementById('payCompanyName').value = entry.companyName;
+  document.getElementById('payAmount').value = '';
+  document.getElementById('payNextDate').value = '';
+  document.getElementById('payNextNote').value = '';
+  payModalBackdrop.classList.add('open');
+}
+document.getElementById('payCancelBtn').addEventListener('click', ()=> payModalBackdrop.classList.remove('open'));
+payModalBackdrop.addEventListener('click', (e)=>{ if(e.target === payModalBackdrop) payModalBackdrop.classList.remove('open'); });
+
+payForm.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const id = document.getElementById('payEntryId').value;
+  const amt = parseFloat(document.getElementById('payAmount').value) || 0;
+  const nextDate = document.getElementById('payNextDate').value;
+  const nextNote = document.getElementById('payNextNote').value.trim();
+  entries = entries.map(en => {
+    if(en.id !== id) return en;
+    const updated = {...en, paidAmount: Number(en.paidAmount) + amt};
+    if(nextDate) updated.nextPaymentDate = nextDate;
+    if(nextNote) updated.nextPaymentNote = nextNote;
+    if(!nextDate && !nextNote){ updated.nextPaymentDate=''; updated.nextPaymentNote=''; }
+    return updated;
+  });
+  await persist();
+  payModalBackdrop.classList.remove('open');
+  render();
+  showToast('Payment record ho gaya');
+});
+
+function render(){
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  let list = entries.map(e => ({...e, status: computeStatus(e)}));
+  if(search){ list = list.filter(e => (e.companyName||'').toLowerCase().includes(search)); }
+  list.sort((a,b)=> (a.nextPaymentDate||'9999').localeCompare(b.nextPaymentDate||'9999'));
+
+  const totalAmount = entries.reduce((s,e)=> s + Number(e.totalAmount), 0);
+  const totalPaid = entries.reduce((s,e)=> s + Number(e.paidAmount), 0);
+  const totalBalance = totalAmount - totalPaid;
+  document.getElementById('statTotal').textContent = fmtMoney(totalAmount);
+  document.getElementById('statPaid').textContent = fmtMoney(totalPaid);
+  document.getElementById('statBalance').textContent = fmtMoney(totalBalance);
+
+  if(list.length === 0){ tableBody.innerHTML = ''; emptyState.style.display = 'block'; return; }
+  emptyState.style.display = 'none';
+
+  tableBody.innerHTML = list.map(e => {
+    const balance = Number(e.totalAmount) - Number(e.paidAmount);
+    const rowClass = e.status === 'overdue' ? 'overdue' : '';
+    let nextPayHtml = '<span style="color:var(--text-secondary)">—</span>';
+    if(e.nextPaymentDate || e.nextPaymentNote){
+      nextPayHtml = `<div class="next-pay">${e.nextPaymentDate ? `<div class="date">${e.nextPaymentDate}</div>` : ''}${e.nextPaymentNote ? `<div class="note">${escapeHtml(e.nextPaymentNote)}</div>` : ''}</div>`;
+    }
+    return `
+      <tr class="${rowClass}">
+        <td><div class="cust-name">${escapeHtml(e.companyName)}</div></td>
+        <td class="mono">${fmtMoney(e.totalAmount)}</td>
+        <td class="mono">${fmtMoney(e.paidAmount)}</td>
+        <td class="mono">${fmtMoney(balance)}</td>
+        <td><span class="badge ${e.status}">${e.status}</span></td>
+        <td>${nextPayHtml}</td>
+        <td>
+          <div class="row-actions">
+            ${balance > 0 ? `<button class="btn btn-pay btn-icon" onclick="openPayModal('${e.id}')">+ Payment</button>` : ''}
+            <button class="btn btn-ghost btn-icon" onclick="editEntry('${e.id}')">Edit</button>
+            <button class="btn btn-ghost btn-icon" onclick="deleteEntry('${e.id}')">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function escapeHtml(str){
+  if(!str) return '';
+  return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+window.editEntry = function(id){ const entry = entries.find(e => e.id === id); if(entry) openModal(entry); };
+window.deleteEntry = deleteEntry;
+window.openPayModal = openPayModal;
+
+document.getElementById('searchInput').addEventListener('input', render);
+
+loadEntries();
+</script>
+</body>
+</html>
