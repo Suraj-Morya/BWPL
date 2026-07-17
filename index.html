@@ -270,9 +270,6 @@ window.addEventListener('error', (e)=>{
   showToast('Error: ' + e.message, true);
 });
 
-if(!window.storage || typeof window.storage.get !== 'function'){
-  showToast('Storage available nahi hai is view me — file ko Claude ke artifact panel me khol kar use karein.', true);
-}
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 function fmtMoney(n){ return '₹' + Number(n||0).toLocaleString('en-IN', {maximumFractionDigits:0}); }
 
@@ -287,17 +284,16 @@ function computeStatus(e){
 async function loadEntries(){
   tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-secondary);">Loading...</td></tr>';
   try{
-    const res = await window.storage.get(STORAGE_KEY, true);
-    entries = res && res.value ? JSON.parse(res.value) : [];
+    const raw = localStorage.getItem(STORAGE_KEY);
+    entries = raw ? JSON.parse(raw) : [];
   }catch(err){ entries = []; }
   render();
 }
 
 async function persist(){
   try{
-    const result = await window.storage.set(STORAGE_KEY, JSON.stringify(entries), true);
-    if(!result) showToast('Warning: save nahi ho paya');
-  }catch(err){ showToast('Storage error — changes save nahi hue'); }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+  }catch(err){ showToast('Storage error — changes save nahi hue', true); }
 }
 
 function openModal(entry){
@@ -360,12 +356,7 @@ entryForm.addEventListener('submit', async (e)=>{
   saveBtn.disabled = true;
   saveBtn.textContent = 'Saving...';
   try{
-    const result = await window.storage.set(STORAGE_KEY, JSON.stringify(entries), true);
-    if(!result){
-      entries = previousEntries;
-      showToast('Save nahi ho paya — dobara try karein', true);
-      return;
-    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
     closeModal();
     render();
     showToast('Save ho gaya ✓');
