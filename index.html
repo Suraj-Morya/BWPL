@@ -181,7 +181,7 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
 </div>
 
 <div class="toolbar">
-  <input class="search-input" id="searchInput" placeholder="Company search karein...">
+  <input class="search-input" id="searchInput" placeholder="Company, naam ya mobile number search karein...">
   <button class="btn btn-primary" id="addBtn">+ Nayi Company</button>
 </div>
 
@@ -190,6 +190,8 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
     <thead>
       <tr>
         <th>Company</th>
+        <th>Contact Person</th>
+        <th>Mobile</th>
         <th>Total Amount</th>
         <th>Paid</th>
         <th>Balance</th>
@@ -213,6 +215,8 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
       <input type="hidden" id="entryId">
       <div class="form-grid">
         <div class="field full"><label>Company Name *</label><input id="companyName"></div>
+        <div class="field"><label>Contact Person Name</label><input id="contactName" placeholder="e.g. Rahul Sharma"></div>
+        <div class="field"><label>Mobile Number</label><input id="contactMobile" type="tel" placeholder="e.g. 9876543210"></div>
         <div class="field"><label>Total Amount (₹) *</label><input id="totalAmount" type="number" min="0" step="0.01"></div>
         <div class="field"><label>Paid Ab Tak (₹)</label><input id="paidAmount" type="number" min="0" step="0.01" value="0"></div>
         <div class="field"><label>Next Payment Date</label><input id="nextPaymentDate" type="date"></div>
@@ -282,7 +286,7 @@ function computeStatus(e){
 }
 
 async function loadEntries(){
-  tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-secondary);">Loading...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-secondary);">Loading...</td></tr>';
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     entries = raw ? JSON.parse(raw) : [];
@@ -300,6 +304,8 @@ function openModal(entry){
   document.getElementById('modalTitle').textContent = entry ? 'Company Edit Karein' : 'Nayi Company';
   document.getElementById('entryId').value = entry ? entry.id : '';
   document.getElementById('companyName').value = entry ? entry.companyName : '';
+  document.getElementById('contactName').value = entry ? (entry.contactName || '') : '';
+  document.getElementById('contactMobile').value = entry ? (entry.contactMobile || '') : '';
   document.getElementById('totalAmount').value = entry ? entry.totalAmount : '';
   document.getElementById('paidAmount').value = entry ? entry.paidAmount : 0;
   document.getElementById('nextPaymentDate').value = entry ? entry.nextPaymentDate : '';
@@ -341,6 +347,8 @@ entryForm.addEventListener('submit', async (e)=>{
   const data = {
     id: editingId || 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
     companyName: companyName,
+    contactName: document.getElementById('contactName').value.trim(),
+    contactMobile: document.getElementById('contactMobile').value.trim(),
     totalAmount: parseFloat(totalAmountRaw) || 0,
     paidAmount: parseFloat(document.getElementById('paidAmount').value) || 0,
     nextPaymentDate: document.getElementById('nextPaymentDate').value,
@@ -413,7 +421,13 @@ payForm.addEventListener('submit', async (e)=>{
 function render(){
   const search = document.getElementById('searchInput').value.toLowerCase();
   let list = entries.map(e => ({...e, status: computeStatus(e)}));
-  if(search){ list = list.filter(e => (e.companyName||'').toLowerCase().includes(search)); }
+  if(search){
+    list = list.filter(e =>
+      (e.companyName||'').toLowerCase().includes(search) ||
+      (e.contactName||'').toLowerCase().includes(search) ||
+      (e.contactMobile||'').toLowerCase().includes(search)
+    );
+  }
   list.sort((a,b)=> (a.nextPaymentDate||'9999').localeCompare(b.nextPaymentDate||'9999'));
 
   const totalAmount = entries.reduce((s,e)=> s + Number(e.totalAmount), 0);
@@ -436,6 +450,8 @@ function render(){
     return `
       <tr class="${rowClass}">
         <td><div class="cust-name">${escapeHtml(e.companyName)}</div></td>
+        <td>${e.contactName ? escapeHtml(e.contactName) : '<span style="color:var(--text-secondary)">—</span>'}</td>
+        <td class="mono">${e.contactMobile ? escapeHtml(e.contactMobile) : '<span style="color:var(--text-secondary)">—</span>'}</td>
         <td class="mono">${fmtMoney(e.totalAmount)}</td>
         <td class="mono">${fmtMoney(e.paidAmount)}</td>
         <td class="mono">${fmtMoney(balance)}</td>
