@@ -177,7 +177,7 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
 
 <div class="login-screen glass" id="loginScreen">
   <div class="login-box glass">
-    <h3>Login Karein</h3>
+    <h3>Sign In</h3>
     <div class="sub">Bajrang Wire India — Payment Tracker</div>
     <form id="loginForm">
       <div class="field"><label>Email</label><input id="loginEmail" type="email" required autocomplete="username"></div>
@@ -201,17 +201,17 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
   </div>
   <button class="btn btn-ghost logout-btn" id="logoutBtn">Logout</button>
 </div>
-<div class="shared-note">🔗 Shared team data — sabhi employees jo ye link kholenge unhe same data dikhega.</div>
+<div class="shared-note">🔗 Shared team data — all employees who open this link will see the same data.</div>
 
 <div class="stats">
-  <div class="stat-card copper glass"><div class="label">Total Amount (Sab Companies)</div><div class="value" id="statTotal">₹0</div></div>
+  <div class="stat-card copper glass"><div class="label">Total Amount (All Companies)</div><div class="value" id="statTotal">₹0</div></div>
   <div class="stat-card success glass"><div class="label">Total Paid Till Now</div><div class="value" id="statPaid">₹0</div></div>
-  <div class="stat-card danger glass"><div class="label">Baaki Balance</div><div class="value" id="statBalance">₹0</div></div>
+  <div class="stat-card danger glass"><div class="label">Outstanding Balance</div><div class="value" id="statBalance">₹0</div></div>
 </div>
 
 <div class="toolbar">
-  <input class="search-input" id="searchInput" placeholder="Company, naam ya mobile number search karein...">
-  <button class="btn btn-primary" id="addBtn">+ Nayi Company</button>
+  <input class="search-input" id="searchInput" placeholder="Search by company, name or mobile number...">
+  <button class="btn btn-primary" id="addBtn">+ New Company</button>
 </div>
 
 <div class="table-wrap glass">
@@ -232,14 +232,14 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
     <tbody id="tableBody"></tbody>
   </table>
   <div class="empty-state" id="emptyState" style="display:none;">
-    <div class="display">Koi entry nahi hai</div>
-    <div>"+ Nayi Company" par click karke pehli entry add karein.</div>
+    <div class="display">No entries yet</div>
+    <div>Click "+ New Company" to add your first entry.</div>
   </div>
 </div>
 
 <div class="modal-backdrop" id="modalBackdrop">
   <div class="modal glass">
-    <h3 id="modalTitle">Nayi Company</h3>
+    <h3 id="modalTitle">New Company</h3>
     <form id="entryForm">
       <input type="hidden" id="entryId">
       <div class="form-grid">
@@ -247,11 +247,11 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
         <div class="field"><label>Contact Person Name</label><input id="contactName" placeholder="e.g. Rahul Sharma"></div>
         <div class="field"><label>Mobile Number</label><input id="contactMobile" type="tel" placeholder="e.g. 9876543210"></div>
         <div class="field"><label>Total Amount (₹) *</label><input id="totalAmount" type="number" min="0" step="0.01"></div>
-        <div class="field"><label>Paid Ab Tak (₹)</label><input id="paidAmount" type="number" min="0" step="0.01" value="0"></div>
+        <div class="field"><label>Paid So Far (₹)</label><input id="paidAmount" type="number" min="0" step="0.01" value="0"></div>
         <div class="field"><label>Next Payment Date</label><input id="nextPaymentDate" type="date"></div>
-        <div class="field"><label>Ya Note (e.g. Next Week)</label><input id="nextPaymentNote" placeholder="Next week / Diwali baad..."></div>
+        <div class="field"><label>Or Note (e.g. Next Week)</label><input id="nextPaymentNote" placeholder="e.g. Next week / After the holidays..."></div>
       </div>
-      <div class="balance-preview">Baaki Balance: <b id="balancePreview">₹0</b></div>
+      <div class="balance-preview">Outstanding Balance: <b id="balancePreview">₹0</b></div>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" id="cancelBtn">Cancel</button>
         <button type="submit" class="btn btn-primary">Save</button>
@@ -262,16 +262,16 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
 
 <div class="modal-backdrop" id="payModalBackdrop">
   <div class="modal glass" style="max-width:380px;">
-    <h3>Aaj Ka Payment</h3>
+    <h3>Record Payment</h3>
     <form id="payForm">
       <input type="hidden" id="payEntryId">
       <div class="field"><label>Company</label><input id="payCompanyName" disabled></div>
-      <div class="field" style="margin-top:12px;"><label>Aaj Kitna Paid (₹) *</label><input id="payAmount" type="number" min="0.01" step="0.01" required></div>
-      <div class="field" style="margin-top:12px;"><label>Agla Payment Kab (Optional)</label><input id="payNextDate" type="date"></div>
-      <div class="field" style="margin-top:12px;"><label>Ya Note (Optional)</label><input id="payNextNote" placeholder="Next week..."></div>
+      <div class="field" style="margin-top:12px;"><label>Amount Paid Today (₹) *</label><input id="payAmount" type="number" min="0.01" step="0.01" required></div>
+      <div class="field" style="margin-top:12px;"><label>Next Payment Date (Optional)</label><input id="payNextDate" type="date"></div>
+      <div class="field" style="margin-top:12px;"><label>Or Note (Optional)</label><input id="payNextNote" placeholder="e.g. Next week..."></div>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" id="payCancelBtn">Cancel</button>
-        <button type="submit" class="btn btn-primary">Payment Save Karein</button>
+        <button type="submit" class="btn btn-primary">Save Payment</button>
       </div>
     </form>
   </div>
@@ -309,7 +309,7 @@ loginForm.addEventListener('submit', async (e)=>{
   try{
     await auth.signInWithEmailAndPassword(email, password);
   }catch(err){
-    loginError.textContent = 'Login fail — email ya password galat hai.';
+    loginError.textContent = 'Login failed — incorrect email or password.';
   }finally{
     loginBtn.disabled = false;
     loginBtn.textContent = 'Login';
@@ -376,11 +376,11 @@ async function loadEntries(){
 async function persist(){
   try{
     localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-  }catch(err){ showToast('Storage error — changes save nahi hue', true); }
+  }catch(err){ showToast('Storage error — changes were not saved', true); }
 }
 
 function openModal(entry){
-  document.getElementById('modalTitle').textContent = entry ? 'Company Edit Karein' : 'Nayi Company';
+  document.getElementById('modalTitle').textContent = entry ? 'Edit Company' : 'New Company';
   document.getElementById('entryId').value = entry ? entry.id : '';
   document.getElementById('companyName').value = entry ? entry.companyName : '';
   document.getElementById('contactName').value = entry ? (entry.contactName || '') : '';
@@ -413,12 +413,12 @@ entryForm.addEventListener('submit', async (e)=>{
   const totalAmountRaw = document.getElementById('totalAmount').value;
 
   if(!companyName){
-    showToast('Company Name likhna zaroori hai', true);
+    showToast('Company Name is required', true);
     document.getElementById('companyName').focus();
     return;
   }
   if(totalAmountRaw === '' || isNaN(parseFloat(totalAmountRaw))){
-    showToast('Total Amount sahi se bharein', true);
+    showToast('Please enter a valid Total Amount', true);
     document.getElementById('totalAmount').focus();
     return;
   }
@@ -446,7 +446,7 @@ entryForm.addEventListener('submit', async (e)=>{
     localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
     closeModal();
     render();
-    showToast('Save ho gaya ✓');
+    showToast('Saved successfully ✓');
   }catch(err){
     entries = previousEntries;
     showToast('Save error: ' + (err && err.message ? err.message : 'unknown'), true);
@@ -457,11 +457,11 @@ entryForm.addEventListener('submit', async (e)=>{
 });
 
 async function deleteEntry(id){
-  if(!confirm('Ye company delete karni hai? Wapas nahi aayegi.')) return;
+  if(!confirm('Delete this company? This action cannot be undone.')) return;
   entries = entries.filter(e => e.id !== id);
   await persist();
   render();
-  showToast('Delete ho gaya');
+  showToast('Deleted successfully');
 }
 
 function openPayModal(id){
@@ -494,7 +494,7 @@ payForm.addEventListener('submit', async (e)=>{
   await persist();
   payModalBackdrop.classList.remove('open');
   render();
-  showToast('Payment record ho gaya');
+  showToast('Payment recorded successfully');
 });
 
 function render(){
