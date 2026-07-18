@@ -162,6 +162,12 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
 .login-box button{ width:100%; margin-top:6px; }
 .app-hidden{ display:none !important; }
 .logout-btn{ margin-left:auto; }
+.lang-switch{ display:flex; gap:4px; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:10px; padding:4px; margin-left:auto; }
+.lang-switch button{ font-family:'Inter',sans-serif; font-weight:600; font-size:12px; padding:6px 12px; border-radius:7px; border:none; cursor:pointer; background:transparent; color:var(--text-secondary); transition:all .15s ease; }
+.lang-switch button.active{ background:linear-gradient(135deg,var(--violet-bright),var(--violet) 55%,var(--cyan)); color:#0c0620; }
+.login-lang-switch{ display:flex; justify-content:center; gap:4px; margin-bottom:18px; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:10px; padding:4px; }
+.login-lang-switch button{ font-family:'Inter',sans-serif; font-weight:600; font-size:12px; padding:6px 14px; border-radius:7px; border:none; cursor:pointer; background:transparent; color:var(--text-secondary); flex:1; transition:all .15s ease; }
+.login-lang-switch button.active{ background:linear-gradient(135deg,var(--violet-bright),var(--violet) 55%,var(--cyan)); color:#0c0620; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -177,13 +183,17 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
 
 <div class="login-screen glass" id="loginScreen">
   <div class="login-box glass">
-    <h3>Sign In</h3>
-    <div class="sub">Bajrang Wire India — Payment Tracker</div>
+    <div class="login-lang-switch" id="loginLangSwitch">
+      <button type="button" data-lang="en">English</button>
+      <button type="button" data-lang="hi">हिंदी</button>
+    </div>
+    <h3 data-i18n="signIn">Sign In</h3>
+    <div class="sub">Bajrang Wire India — <span data-i18n="paymentTracker">Payment Tracker</span></div>
     <form id="loginForm">
-      <div class="field"><label>Email</label><input id="loginEmail" type="email" required autocomplete="username"></div>
-      <div class="field"><label>Password</label><input id="loginPassword" type="password" required autocomplete="current-password"></div>
+      <div class="field"><label data-i18n="email">Email</label><input id="loginEmail" type="email" required autocomplete="username"></div>
+      <div class="field"><label data-i18n="password">Password</label><input id="loginPassword" type="password" required autocomplete="current-password"></div>
       <div class="login-error" id="loginError"></div>
-      <button type="submit" class="btn btn-primary" id="loginBtn">Login</button>
+      <button type="submit" class="btn btn-primary" id="loginBtn" data-i18n="login">Login</button>
     </form>
   </div>
 </div>
@@ -196,65 +206,69 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
   </div>
   <div class="header-text">
     <div class="display">Wire India Pvt. Ltd.</div>
-    <div class="sub">Company Payment Tracker</div>
-    <div class="ceo">Prepared for <b>Gajendra Maheshwari</b>, Chief Executive Officer</div>
+    <div class="sub" data-i18n="companyPaymentTracker">Company Payment Tracker</div>
+    <div class="ceo" data-i18n-html="preparedFor">Prepared for <b>Gajendra Maheshwari</b>, Chief Executive Officer</div>
   </div>
-  <button class="btn btn-ghost logout-btn" id="logoutBtn">Logout</button>
+  <div class="lang-switch" id="langSwitch">
+    <button type="button" data-lang="en">EN</button>
+    <button type="button" data-lang="hi">हि</button>
+  </div>
+  <button class="btn btn-ghost logout-btn" id="logoutBtn" data-i18n="logout">Logout</button>
 </div>
-<div class="shared-note">🔗 Shared team data — all employees who open this link will see the same data.</div>
+<div class="shared-note" data-i18n="sharedNote">🔗 Shared team data — all employees who open this link will see the same data.</div>
 
 <div class="stats">
-  <div class="stat-card copper glass"><div class="label">Total Amount (All Companies)</div><div class="value" id="statTotal">₹0</div></div>
-  <div class="stat-card success glass"><div class="label">Total Paid Till Now</div><div class="value" id="statPaid">₹0</div></div>
-  <div class="stat-card danger glass"><div class="label">Outstanding Balance</div><div class="value" id="statBalance">₹0</div></div>
+  <div class="stat-card copper glass"><div class="label" data-i18n="totalAmountAll">Total Amount (All Companies)</div><div class="value" id="statTotal">₹0</div></div>
+  <div class="stat-card success glass"><div class="label" data-i18n="totalPaidTillNow">Total Paid Till Now</div><div class="value" id="statPaid">₹0</div></div>
+  <div class="stat-card danger glass"><div class="label" data-i18n="outstandingBalance">Outstanding Balance</div><div class="value" id="statBalance">₹0</div></div>
 </div>
 
 <div class="toolbar">
-  <input class="search-input" id="searchInput" placeholder="Search by company, name or mobile number...">
-  <button class="btn btn-primary" id="addBtn">+ New Company</button>
+  <input class="search-input" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="Search by company, name or mobile number...">
+  <button class="btn btn-primary" id="addBtn" data-i18n="newCompany">+ New Company</button>
 </div>
 
 <div class="table-wrap glass">
   <table>
     <thead>
       <tr>
-        <th>Company</th>
-        <th>Contact Person</th>
-        <th>Mobile</th>
-        <th>Total Amount</th>
-        <th>Paid</th>
-        <th>Balance</th>
-        <th>Status</th>
-        <th>Next Payment</th>
+        <th data-i18n="thCompany">Company</th>
+        <th data-i18n="thContactPerson">Contact Person</th>
+        <th data-i18n="thMobile">Mobile</th>
+        <th data-i18n="thTotalAmount">Total Amount</th>
+        <th data-i18n="thPaid">Paid</th>
+        <th data-i18n="thBalance">Balance</th>
+        <th data-i18n="thStatus">Status</th>
+        <th data-i18n="thNextPayment">Next Payment</th>
         <th></th>
       </tr>
     </thead>
     <tbody id="tableBody"></tbody>
   </table>
   <div class="empty-state" id="emptyState" style="display:none;">
-    <div class="display">No entries yet</div>
-    <div>Click "+ New Company" to add your first entry.</div>
+    <div class="display" data-i18n="noEntriesYet">No entries yet</div>
+    <div data-i18n="clickNewCompany">Click "+ New Company" to add your first entry.</div>
   </div>
 </div>
 
 <div class="modal-backdrop" id="modalBackdrop">
   <div class="modal glass">
-    <h3 id="modalTitle">New Company</h3>
+    <h3 id="modalTitle" data-i18n="newCompanyTitle">New Company</h3>
     <form id="entryForm">
       <input type="hidden" id="entryId">
       <div class="form-grid">
-        <div class="field full"><label>Company Name *</label><input id="companyName"></div>
-        <div class="field"><label>Contact Person Name</label><input id="contactName" placeholder="e.g. Rahul Sharma"></div>
-        <div class="field"><label>Mobile Number</label><input id="contactMobile" type="tel" placeholder="e.g. 9876543210"></div>
-        <div class="field"><label>Total Amount (₹) *</label><input id="totalAmount" type="number" min="0" step="0.01"></div>
-        <div class="field"><label>Paid So Far (₹)</label><input id="paidAmount" type="number" min="0" step="0.01" value="0"></div>
-        <div class="field"><label>Next Payment Date</label><input id="nextPaymentDate" type="date"></div>
-        <div class="field"><label>Or Note (e.g. Next Week)</label><input id="nextPaymentNote" placeholder="e.g. Next week / After the holidays..."></div>
+        <div class="field full"><label data-i18n="companyNameLabel">Company Name *</label><input id="companyName"></div>
+        <div class="field"><label data-i18n="contactPersonLabel">Contact Person Name</label><input id="contactName" data-i18n-placeholder="contactNamePh" placeholder="e.g. Rahul Sharma"></div>
+        <div class="field"><label data-i18n="mobileLabel">Mobile Number</label><input id="contactMobile" type="tel" data-i18n-placeholder="mobilePh" placeholder="e.g. 9876543210"></div>
+        <div class="field"><label data-i18n="totalAmountLabel">Total Amount (₹) *</label><input id="totalAmount" type="number" min="0" step="0.01"></div>
+        <div class="field"><label data-i18n="paidSoFarLabel">Paid So Far (₹)</label><input id="paidAmount" type="number" min="0" step="0.01" value="0"></div>
+        <div class="field"><label data-i18n="nextPaymentDateLabel">Next Payment Date</label><input id="nextPaymentDate" type="date"></div>
+        <div class="field"><label data-i18n="orNoteLabel">Or Note (e.g. Next Week)</label><input id="nextPaymentNote" data-i18n-placeholder="orNotePh" placeholder="e.g. Next week / After the holidays..."></div>
       </div>
-      <div class="balance-preview">Outstanding Balance: <b id="balancePreview">₹0</b></div>
+      <div class="balance-preview"><span data-i18n="outstandingBalanceColon">Outstanding Balance:</span> <b id="balancePreview">₹0</b></div>
       <div class="modal-actions">
-        <button type="button" class="btn btn-ghost" id="cancelBtn">Cancel</button>
-        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-ghost" id="cancelBtn" data-i18n="cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary" data-i18n="save">Save</button>
       </div>
     </form>
   </div>
@@ -262,16 +276,16 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
 
 <div class="modal-backdrop" id="payModalBackdrop">
   <div class="modal glass" style="max-width:380px;">
-    <h3>Record Payment</h3>
+    <h3 data-i18n="recordPayment">Record Payment</h3>
     <form id="payForm">
       <input type="hidden" id="payEntryId">
-      <div class="field"><label>Company</label><input id="payCompanyName" disabled></div>
-      <div class="field" style="margin-top:12px;"><label>Amount Paid Today (₹) *</label><input id="payAmount" type="number" min="0.01" step="0.01" required></div>
-      <div class="field" style="margin-top:12px;"><label>Next Payment Date (Optional)</label><input id="payNextDate" type="date"></div>
-      <div class="field" style="margin-top:12px;"><label>Or Note (Optional)</label><input id="payNextNote" placeholder="e.g. Next week..."></div>
+      <div class="field"><label data-i18n="companyLabel">Company</label><input id="payCompanyName" disabled></div>
+      <div class="field" style="margin-top:12px;"><label data-i18n="amountPaidTodayLabel">Amount Paid Today (₹) *</label><input id="payAmount" type="number" min="0.01" step="0.01" required></div>
+      <div class="field" style="margin-top:12px;"><label data-i18n="nextPaymentDateOptLabel">Next Payment Date (Optional)</label><input id="payNextDate" type="date"></div>
+      <div class="field" style="margin-top:12px;"><label data-i18n="orNoteOptLabel">Or Note (Optional)</label><input id="payNextNote" data-i18n-placeholder="payNextNotePh" placeholder="e.g. Next week..."></div>
       <div class="modal-actions">
-        <button type="button" class="btn btn-ghost" id="payCancelBtn">Cancel</button>
-        <button type="submit" class="btn btn-primary">Save Payment</button>
+        <button type="button" class="btn btn-ghost" id="payCancelBtn" data-i18n="cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary" data-i18n="savePayment">Save Payment</button>
       </div>
     </form>
   </div>
@@ -281,6 +295,176 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
 
 <div class="toast" id="toast"></div>
 
+<script>
+const translations = {
+  en: {
+    signIn: 'Sign In',
+    paymentTracker: 'Payment Tracker',
+    email: 'Email',
+    password: 'Password',
+    login: 'Login',
+    loggingIn: 'Logging in...',
+    loginFailed: 'Login failed — incorrect email or password.',
+    companyPaymentTracker: 'Company Payment Tracker',
+    preparedFor: 'Prepared for <b>Gajendra Maheshwari</b>, Chief Executive Officer',
+    logout: 'Logout',
+    sharedNote: '🔗 Shared team data — all employees who open this link will see the same data.',
+    totalAmountAll: 'Total Amount (All Companies)',
+    totalPaidTillNow: 'Total Paid Till Now',
+    outstandingBalance: 'Outstanding Balance',
+    searchPlaceholder: 'Search by company, name or mobile number...',
+    newCompany: '+ New Company',
+    thCompany: 'Company',
+    thContactPerson: 'Contact Person',
+    thMobile: 'Mobile',
+    thTotalAmount: 'Total Amount',
+    thPaid: 'Paid',
+    thBalance: 'Balance',
+    thStatus: 'Status',
+    thNextPayment: 'Next Payment',
+    noEntriesYet: 'No entries yet',
+    clickNewCompany: 'Click "+ New Company" to add your first entry.',
+    newCompanyTitle: 'New Company',
+    editCompanyTitle: 'Edit Company',
+    companyNameLabel: 'Company Name *',
+    contactPersonLabel: 'Contact Person Name',
+    contactNamePh: 'e.g. Rahul Sharma',
+    mobileLabel: 'Mobile Number',
+    mobilePh: 'e.g. 9876543210',
+    totalAmountLabel: 'Total Amount (₹) *',
+    paidSoFarLabel: 'Paid So Far (₹)',
+    nextPaymentDateLabel: 'Next Payment Date',
+    orNoteLabel: 'Or Note (e.g. Next Week)',
+    orNotePh: 'e.g. Next week / After the holidays...',
+    outstandingBalanceColon: 'Outstanding Balance:',
+    cancel: 'Cancel',
+    save: 'Save',
+    saving: 'Saving...',
+    recordPayment: 'Record Payment',
+    companyLabel: 'Company',
+    amountPaidTodayLabel: 'Amount Paid Today (₹) *',
+    nextPaymentDateOptLabel: 'Next Payment Date (Optional)',
+    orNoteOptLabel: 'Or Note (Optional)',
+    payNextNotePh: 'e.g. Next week...',
+    savePayment: 'Save Payment',
+    loading: 'Loading...',
+    statusPaid: 'paid',
+    statusPartial: 'partial',
+    statusPending: 'pending',
+    statusOverdue: 'overdue',
+    companyNameRequired: 'Company Name is required',
+    validTotalAmount: 'Please enter a valid Total Amount',
+    savedSuccessfully: 'Saved successfully ✓',
+    saveError: 'Save error: ',
+    deletedSuccessfully: 'Deleted successfully',
+    paymentRecorded: 'Payment recorded successfully',
+    confirmDelete: 'Delete this company? This action cannot be undone.',
+    storageError: 'Storage error — changes were not saved',
+    paymentBtn: 'Payment',
+    edit: 'Edit',
+    delete: 'Delete'
+  },
+  hi: {
+    signIn: 'साइन इन करें',
+    paymentTracker: 'पेमेंट ट्रैकर',
+    email: 'ईमेल',
+    password: 'पासवर्ड',
+    login: 'लॉगिन',
+    loggingIn: 'लॉगिन हो रहा है...',
+    loginFailed: 'लॉगिन विफल — गलत ईमेल या पासवर्ड।',
+    companyPaymentTracker: 'कंपनी पेमेंट ट्रैकर',
+    preparedFor: '<b>गजेंद्र माहेश्वरी</b>, मुख्य कार्यकारी अधिकारी के लिए तैयार किया गया',
+    logout: 'लॉगआउट',
+    sharedNote: '🔗 साझा टीम डेटा — यह लिंक खोलने वाले सभी कर्मचारियों को एक ही डेटा दिखेगा।',
+    totalAmountAll: 'कुल राशि (सभी कंपनियां)',
+    totalPaidTillNow: 'अब तक भुगतान की गई कुल राशि',
+    outstandingBalance: 'बकाया राशि',
+    searchPlaceholder: 'कंपनी, नाम या मोबाइल नंबर से खोजें...',
+    newCompany: '+ नई कंपनी',
+    thCompany: 'कंपनी',
+    thContactPerson: 'संपर्क व्यक्ति',
+    thMobile: 'मोबाइल',
+    thTotalAmount: 'कुल राशि',
+    thPaid: 'भुगतान',
+    thBalance: 'शेष राशि',
+    thStatus: 'स्थिति',
+    thNextPayment: 'अगला भुगतान',
+    noEntriesYet: 'अभी तक कोई प्रविष्टि नहीं',
+    clickNewCompany: 'अपनी पहली प्रविष्टि जोड़ने के लिए "+ नई कंपनी" पर क्लिक करें।',
+    newCompanyTitle: 'नई कंपनी',
+    editCompanyTitle: 'कंपनी संपादित करें',
+    companyNameLabel: 'कंपनी का नाम *',
+    contactPersonLabel: 'संपर्क व्यक्ति का नाम',
+    contactNamePh: 'जैसे राहुल शर्मा',
+    mobileLabel: 'मोबाइल नंबर',
+    mobilePh: 'जैसे 9876543210',
+    totalAmountLabel: 'कुल राशि (₹) *',
+    paidSoFarLabel: 'अब तक भुगतान (₹)',
+    nextPaymentDateLabel: 'अगली भुगतान तिथि',
+    orNoteLabel: 'या नोट (जैसे अगला सप्ताह)',
+    orNotePh: 'जैसे अगला सप्ताह / त्योहार के बाद...',
+    outstandingBalanceColon: 'बकाया राशि:',
+    cancel: 'रद्द करें',
+    save: 'सेव करें',
+    saving: 'सेव हो रहा है...',
+    recordPayment: 'भुगतान दर्ज करें',
+    companyLabel: 'कंपनी',
+    amountPaidTodayLabel: 'आज भुगतान की गई राशि (₹) *',
+    nextPaymentDateOptLabel: 'अगली भुगतान तिथि (वैकल्पिक)',
+    orNoteOptLabel: 'या नोट (वैकल्पिक)',
+    payNextNotePh: 'जैसे अगला सप्ताह...',
+    savePayment: 'भुगतान सेव करें',
+    loading: 'लोड हो रहा है...',
+    statusPaid: 'भुगतान हो गया',
+    statusPartial: 'आंशिक',
+    statusPending: 'लंबित',
+    statusOverdue: 'अतिदेय',
+    companyNameRequired: 'कंपनी का नाम आवश्यक है',
+    validTotalAmount: 'कृपया एक मान्य कुल राशि दर्ज करें',
+    savedSuccessfully: 'सफलतापूर्वक सेव हो गया ✓',
+    saveError: 'सेव करने में त्रुटि: ',
+    deletedSuccessfully: 'सफलतापूर्वक हटा दिया गया',
+    paymentRecorded: 'भुगतान सफलतापूर्वक दर्ज किया गया',
+    confirmDelete: 'इस कंपनी को हटाएं? यह क्रिया वापस नहीं ली जा सकती।',
+    storageError: 'स्टोरेज त्रुटि — बदलाव सेव नहीं हुए',
+    paymentBtn: 'भुगतान',
+    edit: 'संपादित करें',
+    delete: 'हटाएं'
+  }
+};
+let currentLang = localStorage.getItem('bwpl-lang') || 'en';
+
+function t(key){ return (translations[currentLang] && translations[currentLang][key]) || translations.en[key] || key; }
+
+function applyTranslations(){
+  document.documentElement.lang = currentLang;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    el.innerHTML = t(el.getAttribute('data-i18n-html'));
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+  });
+  document.querySelectorAll('.lang-switch button, .login-lang-switch button').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-lang') === currentLang);
+  });
+  if(typeof render === 'function' && typeof entries !== 'undefined') render();
+}
+
+function setLang(lang){
+  currentLang = lang;
+  localStorage.setItem('bwpl-lang', lang);
+  applyTranslations();
+}
+
+document.querySelectorAll('.lang-switch button, .login-lang-switch button').forEach(btn => {
+  btn.addEventListener('click', () => setLang(btn.getAttribute('data-lang')));
+});
+
+applyTranslations();
+</script>
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyDWA-Ph_pVpxLEdblnOyybIzYcMZs6Gz04",
@@ -303,16 +487,16 @@ loginForm.addEventListener('submit', async (e)=>{
   e.preventDefault();
   loginError.textContent = '';
   loginBtn.disabled = true;
-  loginBtn.textContent = 'Logging in...';
+  loginBtn.textContent = t('loggingIn');
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
   try{
     await auth.signInWithEmailAndPassword(email, password);
   }catch(err){
-    loginError.textContent = 'Login failed — incorrect email or password.';
+    loginError.textContent = t('loginFailed');
   }finally{
     loginBtn.disabled = false;
-    loginBtn.textContent = 'Login';
+    loginBtn.textContent = t('login');
   }
 });
 
@@ -365,7 +549,7 @@ function computeStatus(e){
 }
 
 async function loadEntries(){
-  tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-secondary);">Loading...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-secondary);">' + t('loading') + '</td></tr>';
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     entries = raw ? JSON.parse(raw) : [];
@@ -376,11 +560,11 @@ async function loadEntries(){
 async function persist(){
   try{
     localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-  }catch(err){ showToast('Storage error — changes were not saved', true); }
+  }catch(err){ showToast(t('storageError'), true); }
 }
 
 function openModal(entry){
-  document.getElementById('modalTitle').textContent = entry ? 'Edit Company' : 'New Company';
+  document.getElementById('modalTitle').textContent = entry ? t('editCompanyTitle') : t('newCompanyTitle');
   document.getElementById('entryId').value = entry ? entry.id : '';
   document.getElementById('companyName').value = entry ? entry.companyName : '';
   document.getElementById('contactName').value = entry ? (entry.contactName || '') : '';
@@ -413,12 +597,12 @@ entryForm.addEventListener('submit', async (e)=>{
   const totalAmountRaw = document.getElementById('totalAmount').value;
 
   if(!companyName){
-    showToast('Company Name is required', true);
+    showToast(t('companyNameRequired'), true);
     document.getElementById('companyName').focus();
     return;
   }
   if(totalAmountRaw === '' || isNaN(parseFloat(totalAmountRaw))){
-    showToast('Please enter a valid Total Amount', true);
+    showToast(t('validTotalAmount'), true);
     document.getElementById('totalAmount').focus();
     return;
   }
@@ -441,27 +625,27 @@ entryForm.addEventListener('submit', async (e)=>{
   }
   const saveBtn = entryForm.querySelector('button[type="submit"]');
   saveBtn.disabled = true;
-  saveBtn.textContent = 'Saving...';
+  saveBtn.textContent = t('saving');
   try{
     localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
     closeModal();
     render();
-    showToast('Saved successfully ✓');
+    showToast(t('savedSuccessfully'));
   }catch(err){
     entries = previousEntries;
-    showToast('Save error: ' + (err && err.message ? err.message : 'unknown'), true);
+    showToast(t('saveError') + (err && err.message ? err.message : 'unknown'), true);
   }finally{
     saveBtn.disabled = false;
-    saveBtn.textContent = 'Save';
+    saveBtn.textContent = t('save');
   }
 });
 
 async function deleteEntry(id){
-  if(!confirm('Delete this company? This action cannot be undone.')) return;
+  if(!confirm(t('confirmDelete'))) return;
   entries = entries.filter(e => e.id !== id);
   await persist();
   render();
-  showToast('Deleted successfully');
+  showToast(t('deletedSuccessfully'));
 }
 
 function openPayModal(id){
@@ -494,7 +678,7 @@ payForm.addEventListener('submit', async (e)=>{
   await persist();
   payModalBackdrop.classList.remove('open');
   render();
-  showToast('Payment recorded successfully');
+  showToast(t('paymentRecorded'));
 });
 
 function render(){
@@ -522,6 +706,7 @@ function render(){
   tableBody.innerHTML = list.map(e => {
     const balance = Number(e.totalAmount) - Number(e.paidAmount);
     const rowClass = e.status === 'overdue' ? 'overdue' : '';
+    const statusLabel = t('status' + e.status.charAt(0).toUpperCase() + e.status.slice(1));
     let nextPayHtml = '<span style="color:var(--text-secondary)">—</span>';
     if(e.nextPaymentDate || e.nextPaymentNote){
       nextPayHtml = `<div class="next-pay">${e.nextPaymentDate ? `<div class="date">${e.nextPaymentDate}</div>` : ''}${e.nextPaymentNote ? `<div class="note">${escapeHtml(e.nextPaymentNote)}</div>` : ''}</div>`;
@@ -534,13 +719,13 @@ function render(){
         <td class="mono">${fmtMoney(e.totalAmount)}</td>
         <td class="mono">${fmtMoney(e.paidAmount)}</td>
         <td class="mono">${fmtMoney(balance)}</td>
-        <td><span class="badge ${e.status}">${e.status}</span></td>
+        <td><span class="badge ${e.status}">${statusLabel}</span></td>
         <td>${nextPayHtml}</td>
         <td>
           <div class="row-actions">
-            ${balance > 0 ? `<button class="btn btn-pay btn-icon" onclick="openPayModal('${e.id}')">+ Payment</button>` : ''}
-            <button class="btn btn-ghost btn-icon" onclick="editEntry('${e.id}')">Edit</button>
-            <button class="btn btn-ghost btn-icon" onclick="deleteEntry('${e.id}')">Delete</button>
+            ${balance > 0 ? `<button class="btn btn-pay btn-icon" onclick="openPayModal('${e.id}')">+ ${t('paymentBtn')}</button>` : ''}
+            <button class="btn btn-ghost btn-icon" onclick="editEntry('${e.id}')">${t('edit')}</button>
+            <button class="btn btn-ghost btn-icon" onclick="deleteEntry('${e.id}')">${t('delete')}</button>
           </div>
         </td>
       </tr>
