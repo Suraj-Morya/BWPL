@@ -238,6 +238,7 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -310,6 +311,7 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
 <div class="toolbar">
   <input class="search-input" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="Search by company, name or mobile number...">
   <button class="btn btn-ghost settings-btn" id="templateBtn" title="Reminder message template">✏️ <span data-i18n="messageTemplate">Message Template</span></button>
+  <button class="btn btn-ghost settings-btn" id="bulkUploadBtn" data-i18n="bulkUpload">📤 Bulk Upload</button>
   <button class="btn btn-primary" id="addBtn" data-i18n="newCompany">+ New Company</button>
 </div>
 
@@ -392,12 +394,31 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
   </div>
 </div>
 
+<div class="modal-backdrop" id="bulkModalBackdrop">
+  <div class="modal glass" style="max-width:480px;">
+    <h3 id="bulkModalTitle">Bulk Upload</h3>
+    <div class="field" style="margin-bottom:16px;">
+      <label id="bulkUploadHelpText" style="text-transform:none; letter-spacing:normal; line-height:1.5;"></label>
+    </div>
+    <input type="file" id="bulkFileInput" accept=".xlsx,.xls,.csv" style="display:none;">
+    <div id="bulkUploadStatus" style="font-size:12.5px; color:var(--text-secondary); min-height:16px; margin-bottom:6px;"></div>
+    <div class="modal-actions" style="justify-content:space-between;">
+      <button type="button" class="btn btn-ghost" id="bulkDownloadSampleBtn" data-i18n="downloadSample">⬇️ Download Sample</button>
+      <div style="display:flex; gap:10px;">
+        <button type="button" class="btn btn-ghost" id="bulkCancelBtn" data-i18n="cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="bulkChooseFileBtn" data-i18n="chooseFile">📁 Choose File</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </div>
 
 <div id="enquiryView" class="view-hidden">
 
 <div class="toolbar">
   <input class="search-input" id="enquirySearchInput" data-i18n-placeholder="enquirySearchPlaceholder" placeholder="Search by name or remarks...">
+  <button class="btn btn-ghost settings-btn" id="enquiryBulkUploadBtn" data-i18n="bulkUpload">📤 Bulk Upload</button>
   <button class="btn btn-primary" id="addEnquiryBtn" data-i18n="newEnquiry">+ New Enquiry</button>
 </div>
 
@@ -556,6 +577,19 @@ const translations = {
     calDueOn: 'Payments due on',
     lightMode: 'Switch to light mode',
     darkMode: 'Switch to dark mode',
+    convertToCompany: '➡️ Convert to Company',
+    convertedFromEnquiry: 'Converted from enquiry — fill Total Amount and Save',
+    duplicateMobileWarning: "This number is already saved for '{name}'. Save anyway?",
+    bulkUpload: '📤 Bulk Upload',
+    bulkUploadTitleCompany: 'Bulk Upload Companies',
+    bulkUploadTitleEnquiry: 'Bulk Upload Enquiries',
+    bulkUploadHelpCompany: 'Excel/CSV columns: Company Name*, Contact Person, Mobile, Total Amount*, Paid Amount, Next Payment Date, Note. (* required)',
+    bulkUploadHelpEnquiry: 'Excel/CSV columns: Name / Company*, Mobile, Date, Remarks. (* required)',
+    downloadSample: '⬇️ Download Sample',
+    chooseFile: '📁 Choose File',
+    processingFile: 'Processing file...',
+    bulkUploadErrorPrefix: 'Error reading file: ',
+    bulkUploadResult: '{added} added, {skippedInvalid} skipped (invalid), {skippedDup} skipped (duplicate mobile)',
     weekdays: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
     months: ['January','February','March','April','May','June','July','August','September','October','November','December']
   },
@@ -657,6 +691,19 @@ const translations = {
     calDueOn: 'भुगतान देय है',
     lightMode: 'लाइट मोड पर जाएं',
     darkMode: 'डार्क मोड पर जाएं',
+    convertToCompany: '➡️ कंपनी में बदलें',
+    convertedFromEnquiry: 'एन्क्वायरी से कन्वर्ट किया गया — Total Amount भरें और Save करें',
+    duplicateMobileWarning: "ये नंबर पहले से '{name}' के लिए सेव है। फिर भी सेव करें?",
+    bulkUpload: '📤 बल्क अपलोड',
+    bulkUploadTitleCompany: 'कंपनियां बल्क अपलोड करें',
+    bulkUploadTitleEnquiry: 'एन्क्वायरी बल्क अपलोड करें',
+    bulkUploadHelpCompany: 'Excel/CSV कॉलम: Company Name*, Contact Person, Mobile, Total Amount*, Paid Amount, Next Payment Date, Note. (* आवश्यक)',
+    bulkUploadHelpEnquiry: 'Excel/CSV कॉलम: Name / Company*, Mobile, Date, Remarks. (* आवश्यक)',
+    downloadSample: '⬇️ सैंपल डाउनलोड करें',
+    chooseFile: '📁 फ़ाइल चुनें',
+    processingFile: 'फ़ाइल प्रोसेस हो रही है...',
+    bulkUploadErrorPrefix: 'फ़ाइल पढ़ने में त्रुटि: ',
+    bulkUploadResult: '{added} जोड़े गए, {skippedInvalid} स्किप (अमान्य), {skippedDup} स्किप (डुप्लिकेट मोबाइल)',
     weekdays: ['रवि','सोम','मंगल','बुध','गुरु','शुक्र','शनि'],
     months: ['जनवरी','फ़रवरी','मार्च','अप्रैल','मई','जून','जुलाई','अगस्त','सितंबर','अक्टूबर','नवंबर','दिसंबर']
   }
@@ -772,6 +819,24 @@ document.getElementById('logoutBtn').addEventListener('click', ()=> auth.signOut
 const STORAGE_KEY = 'bajrang-wire-company-payments';
 let entries = [];
 let editingId = null;
+let convertingEnquiryId = null;
+
+/* ---------- Duplicate mobile number check ---------- */
+function normalizeMobile(m){ return String(m || '').replace(/\D/g, ''); }
+
+function findDuplicateMobile(mobile, excludeId){
+  const target = normalizeMobile(mobile);
+  if(!target) return null;
+  for(const en of entries){
+    if(en.id === excludeId) continue;
+    if(target && normalizeMobile(en.contactMobile) === target) return en.companyName;
+  }
+  for(const eq of enquiries){
+    if(eq.id === excludeId) continue;
+    if(target && normalizeMobile(eq.mobile) === target) return eq.name;
+  }
+  return null;
+}
 
 const tableBody = document.getElementById('tableBody');
 const emptyState = document.getElementById('emptyState');
@@ -911,7 +976,7 @@ function openModal(entry){
   updateBalancePreview();
   modalBackdrop.classList.add('open');
 }
-function closeModal(){ modalBackdrop.classList.remove('open'); entryForm.reset(); editingId = null; }
+function closeModal(){ modalBackdrop.classList.remove('open'); entryForm.reset(); editingId = null; convertingEnquiryId = null; }
 
 function updateBalancePreview(){
   const total = parseFloat(document.getElementById('totalAmount').value) || 0;
@@ -920,6 +985,21 @@ function updateBalancePreview(){
 }
 document.getElementById('totalAmount').addEventListener('input', updateBalancePreview);
 document.getElementById('paidAmount').addEventListener('input', updateBalancePreview);
+
+window.convertEnquiryToCompany = function(id){
+  const entry = enquiries.find(e => e.id === id);
+  if(!entry) return;
+  switchTab(allTabs[0]);
+  openModal(null);
+  document.getElementById('companyName').value = entry.name || '';
+  document.getElementById('contactMobile').value = entry.mobile || '';
+  document.getElementById('nextPaymentDate').value = entry.date || '';
+  document.getElementById('nextPaymentNote').value = entry.remarks || '';
+  convertingEnquiryId = id;
+  updateBalancePreview();
+  showToast(t('convertedFromEnquiry'));
+  setTimeout(()=> document.getElementById('totalAmount').focus(), 50);
+};
 
 document.getElementById('addBtn').addEventListener('click', ()=> openModal(null));
 document.getElementById('cancelBtn').addEventListener('click', closeModal);
@@ -939,6 +1019,15 @@ entryForm.addEventListener('submit', async (e)=>{
     showToast(t('validTotalAmount'), true);
     document.getElementById('totalAmount').focus();
     return;
+  }
+
+  const mobileVal = document.getElementById('contactMobile').value.trim();
+  if(mobileVal){
+    const dupName = findDuplicateMobile(mobileVal, editingId);
+    if(dupName){
+      const proceed = confirm(t('duplicateMobileWarning').replace('{name}', dupName));
+      if(!proceed) return;
+    }
   }
 
   const data = {
@@ -962,6 +1051,12 @@ entryForm.addEventListener('submit', async (e)=>{
   saveBtn.textContent = t('saving');
   try{
     localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    if(convertingEnquiryId){
+      enquiries = enquiries.filter(en => en.id !== convertingEnquiryId);
+      persistEnquiries();
+      renderEnquiries();
+      convertingEnquiryId = null;
+    }
     closeModal();
     render();
     showToast(t('savedSuccessfully'));
@@ -1152,6 +1247,14 @@ enquiryForm.addEventListener('submit', (e)=>{
     document.getElementById('enquiryName').focus();
     return;
   }
+  const enquiryMobileVal = document.getElementById('enquiryMobile').value.trim();
+  if(enquiryMobileVal){
+    const dupName = findDuplicateMobile(enquiryMobileVal, editingEnquiryId);
+    if(dupName){
+      const proceed = confirm(t('duplicateMobileWarning').replace('{name}', dupName));
+      if(!proceed) return;
+    }
+  }
   const data = {
     id: editingEnquiryId || 'q_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
     name: name,
@@ -1201,6 +1304,7 @@ function renderEnquiries(){
       <td>${e.date ? e.date : '<span style="color:var(--text-secondary)">—</span>'}</td>
       <td>
         <div class="row-actions">
+          <button class="btn btn-primary btn-icon" onclick="convertEnquiryToCompany('${e.id}')">${t('convertToCompany')}</button>
           <button class="btn btn-ghost btn-icon" onclick="editEnquiry('${e.id}')">${t('edit')}</button>
           <button class="btn btn-ghost btn-icon" onclick="deleteEnquiryEntry('${e.id}')">${t('delete')}</button>
         </div>
@@ -1215,6 +1319,134 @@ window.deleteEnquiryEntry = deleteEnquiry;
 document.getElementById('enquirySearchInput').addEventListener('input', renderEnquiries);
 
 loadEnquiries();
+
+/* ---------- Excel Bulk Upload ---------- */
+let bulkUploadType = 'company';
+const bulkModalBackdrop = document.getElementById('bulkModalBackdrop');
+const bulkFileInput = document.getElementById('bulkFileInput');
+const bulkUploadStatus = document.getElementById('bulkUploadStatus');
+
+function normalizeHeader(h){ return String(h || '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
+
+function getField(row, candidates){
+  const map = {};
+  Object.keys(row).forEach(k => { map[normalizeHeader(k)] = row[k]; });
+  for(const c of candidates){
+    const val = map[normalizeHeader(c)];
+    if(val !== undefined && val !== null && String(val).trim() !== '') return val;
+  }
+  return '';
+}
+
+function excelDateToStr(val){
+  if(val === '' || val === undefined || val === null) return '';
+  if(typeof val === 'number' && window.XLSX && XLSX.SSF){
+    const d = XLSX.SSF.parse_date_code(val);
+    if(d) return `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;
+  }
+  const s = String(val).trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if(m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  return '';
+}
+
+function openBulkModal(type){
+  bulkUploadType = type;
+  document.getElementById('bulkModalTitle').textContent = t(type === 'company' ? 'bulkUploadTitleCompany' : 'bulkUploadTitleEnquiry');
+  document.getElementById('bulkUploadHelpText').textContent = t(type === 'company' ? 'bulkUploadHelpCompany' : 'bulkUploadHelpEnquiry');
+  bulkUploadStatus.textContent = '';
+  bulkModalBackdrop.classList.add('open');
+}
+document.getElementById('bulkUploadBtn').addEventListener('click', ()=> openBulkModal('company'));
+document.getElementById('enquiryBulkUploadBtn').addEventListener('click', ()=> openBulkModal('enquiry'));
+document.getElementById('bulkCancelBtn').addEventListener('click', ()=> bulkModalBackdrop.classList.remove('open'));
+bulkModalBackdrop.addEventListener('click', (e)=>{ if(e.target === bulkModalBackdrop) bulkModalBackdrop.classList.remove('open'); });
+document.getElementById('bulkChooseFileBtn').addEventListener('click', ()=> bulkFileInput.click());
+
+document.getElementById('bulkDownloadSampleBtn').addEventListener('click', ()=>{
+  let data, filename;
+  if(bulkUploadType === 'company'){
+    data = [{ 'Company Name':'ABC Traders', 'Contact Person':'Rahul Sharma', 'Mobile':'9876543210', 'Total Amount':50000, 'Paid Amount':10000, 'Next Payment Date':'2026-08-15', 'Note':'Next week' }];
+    filename = 'company_bulk_upload_sample.xlsx';
+  }else{
+    data = [{ 'Name / Company':'XYZ Enterprises', 'Mobile':'9876543210', 'Date':'2026-07-18', 'Remarks':'Interested in bulk order' }];
+    filename = 'enquiry_bulk_upload_sample.xlsx';
+  }
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+  XLSX.writeFile(wb, filename);
+});
+
+function importCompanyRows(rows){
+  let added = 0, skippedInvalid = 0, skippedDup = 0;
+  rows.forEach(row => {
+    const companyName = String(getField(row, ['Company Name','Company','Name'])).trim();
+    const totalAmount = parseFloat(getField(row, ['Total Amount','Total','Amount']));
+    if(!companyName || isNaN(totalAmount)){ skippedInvalid++; return; }
+    const contactMobile = String(getField(row, ['Mobile','Mobile Number','Phone'])).trim();
+    if(contactMobile && findDuplicateMobile(contactMobile, null)){ skippedDup++; return; }
+    entries.push({
+      id: 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+      companyName,
+      contactName: String(getField(row, ['Contact Person','Contact Name','Person'])).trim(),
+      contactMobile,
+      totalAmount,
+      paidAmount: parseFloat(getField(row, ['Paid Amount','Paid'])) || 0,
+      nextPaymentDate: excelDateToStr(getField(row, ['Next Payment Date','Next Payment','Date'])),
+      nextPaymentNote: String(getField(row, ['Note','Notes','Remark','Remarks'])).trim()
+    });
+    added++;
+  });
+  persist();
+  render();
+  bulkModalBackdrop.classList.remove('open');
+  showToast(t('bulkUploadResult').replace('{added}',added).replace('{skippedInvalid}',skippedInvalid).replace('{skippedDup}',skippedDup));
+}
+
+function importEnquiryRows(rows){
+  let added = 0, skippedInvalid = 0, skippedDup = 0;
+  rows.forEach(row => {
+    const name = String(getField(row, ['Name / Company','Name','Company'])).trim();
+    if(!name){ skippedInvalid++; return; }
+    const mobile = String(getField(row, ['Mobile','Mobile Number','Phone'])).trim();
+    if(mobile && findDuplicateMobile(mobile, null)){ skippedDup++; return; }
+    enquiries.push({
+      id: 'q_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+      name,
+      mobile,
+      date: excelDateToStr(getField(row, ['Date','Enquiry Date'])),
+      remarks: String(getField(row, ['Remarks','Remark','Note','Notes'])).trim()
+    });
+    added++;
+  });
+  persistEnquiries();
+  renderEnquiries();
+  bulkModalBackdrop.classList.remove('open');
+  showToast(t('bulkUploadResult').replace('{added}',added).replace('{skippedInvalid}',skippedInvalid).replace('{skippedDup}',skippedDup));
+}
+
+bulkFileInput.addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  bulkUploadStatus.textContent = t('processingFile');
+  const reader = new FileReader();
+  reader.onload = function(evt){
+    try{
+      const data = new Uint8Array(evt.target.result);
+      const wb = XLSX.read(data, {type:'array'});
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, {defval:''});
+      if(bulkUploadType === 'company') importCompanyRows(rows); else importEnquiryRows(rows);
+    }catch(err){
+      bulkUploadStatus.textContent = t('bulkUploadErrorPrefix') + (err && err.message ? err.message : '');
+    }finally{
+      bulkFileInput.value = '';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
 
 /* ---------- Calendar View ---------- */
 let calendarViewDate = new Date();
