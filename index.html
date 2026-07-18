@@ -367,6 +367,7 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
     <form id="payForm">
       <input type="hidden" id="payEntryId">
       <div class="field"><label data-i18n="companyLabel">Company</label><input id="payCompanyName" disabled></div>
+      <div class="field" style="margin-top:12px;"><label data-i18n="paymentDateLabel">Payment Date</label><input id="payDate" type="date"></div>
       <div class="field" style="margin-top:12px;"><label data-i18n="amountPaidTodayLabel">Amount Paid Today (₹) *</label><input id="payAmount" type="number" min="0.01" step="0.01" required></div>
       <div class="field" style="margin-top:12px;"><label data-i18n="nextPaymentDateOptLabel">Next Payment Date (Optional)</label><input id="payNextDate" type="date"></div>
       <div class="field" style="margin-top:12px;"><label data-i18n="orNoteOptLabel">Or Note (Optional)</label><input id="payNextNote" data-i18n-placeholder="payNextNotePh" placeholder="e.g. Next week..."></div>
@@ -408,6 +409,32 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
         <button type="button" class="btn btn-ghost" id="bulkCancelBtn" data-i18n="cancel">Cancel</button>
         <button type="button" class="btn btn-primary" id="bulkChooseFileBtn" data-i18n="chooseFile">📁 Choose File</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="historyModalBackdrop">
+  <div class="modal glass" style="max-width:540px;">
+    <h3 id="historyModalTitle">Payment History</h3>
+    <div style="display:flex; gap:18px; margin-bottom:16px; flex-wrap:wrap;">
+      <div style="font-size:12.5px; color:var(--text-secondary);"><span data-i18n="thTotalAmount">Total Amount</span>: <b id="historyTotalAmount" style="color:var(--text-primary);">₹0</b></div>
+      <div style="font-size:12.5px; color:var(--text-secondary);"><span data-i18n="thPaid">Paid</span>: <b id="historyPaidAmount" style="color:var(--success);">₹0</b></div>
+      <div style="font-size:12.5px; color:var(--text-secondary);"><span data-i18n="thBalance">Balance</span>: <b id="historyBalanceAmount" style="color:var(--danger);">₹0</b></div>
+    </div>
+    <div class="table-wrap glass" style="box-shadow:none; max-height:320px; overflow-y:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th data-i18n="thHistoryDate">Date</th>
+            <th data-i18n="thHistoryPaid">Paid on this date</th>
+            <th data-i18n="thHistoryBalance">Balance after</th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody"></tbody>
+      </table>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-primary" id="historyCloseBtn" data-i18n="close">Close</button>
     </div>
   </div>
 </div>
@@ -524,6 +551,7 @@ const translations = {
     saving: 'Saving...',
     recordPayment: 'Record Payment',
     companyLabel: 'Company',
+    paymentDateLabel: 'Payment Date',
     amountPaidTodayLabel: 'Amount Paid Today (₹) *',
     nextPaymentDateOptLabel: 'Next Payment Date (Optional)',
     orNoteOptLabel: 'Or Note (Optional)',
@@ -590,6 +618,13 @@ const translations = {
     processingFile: 'Processing file...',
     bulkUploadErrorPrefix: 'Error reading file: ',
     bulkUploadResult: '{added} added, {skippedInvalid} skipped (invalid), {skippedDup} skipped (duplicate mobile)',
+    historyBtn: 'History',
+    paymentHistoryFor: 'Payment History — {company}',
+    noPaymentHistory: 'No dated payments recorded yet. New payments will appear here with date-wise amount and balance.',
+    thHistoryDate: 'Date',
+    thHistoryPaid: 'Paid on this date',
+    thHistoryBalance: 'Balance after',
+    close: 'Close',
     weekdays: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
     months: ['January','February','March','April','May','June','July','August','September','October','November','December']
   },
@@ -638,6 +673,7 @@ const translations = {
     saving: 'सेव हो रहा है...',
     recordPayment: 'भुगतान दर्ज करें',
     companyLabel: 'कंपनी',
+    paymentDateLabel: 'भुगतान की तारीख',
     amountPaidTodayLabel: 'आज भुगतान की गई राशि (₹) *',
     nextPaymentDateOptLabel: 'अगली भुगतान तिथि (वैकल्पिक)',
     orNoteOptLabel: 'या नोट (वैकल्पिक)',
@@ -704,6 +740,13 @@ const translations = {
     processingFile: 'फ़ाइल प्रोसेस हो रही है...',
     bulkUploadErrorPrefix: 'फ़ाइल पढ़ने में त्रुटि: ',
     bulkUploadResult: '{added} जोड़े गए, {skippedInvalid} स्किप (अमान्य), {skippedDup} स्किप (डुप्लिकेट मोबाइल)',
+    historyBtn: 'हिस्ट्री',
+    paymentHistoryFor: 'भुगतान हिस्ट्री — {company}',
+    noPaymentHistory: 'अभी तक कोई तारीख़वार भुगतान दर्ज नहीं हुआ। नए भुगतान यहां तारीख, राशि और शेष राशि के साथ दिखेंगे।',
+    thHistoryDate: 'तारीख',
+    thHistoryPaid: 'इस तारीख को भुगतान',
+    thHistoryBalance: 'भुगतान के बाद शेष',
+    close: 'बंद करें',
     weekdays: ['रवि','सोम','मंगल','बुध','गुरु','शुक्र','शनि'],
     months: ['जनवरी','फ़रवरी','मार्च','अप्रैल','मई','जून','जुलाई','अगस्त','सितंबर','अक्टूबर','नवंबर','दिसंबर']
   }
@@ -1082,6 +1125,7 @@ function openPayModal(id){
   if(!entry) return;
   document.getElementById('payEntryId').value = id;
   document.getElementById('payCompanyName').value = entry.companyName;
+  document.getElementById('payDate').value = todayStr();
   document.getElementById('payAmount').value = '';
   document.getElementById('payNextDate').value = '';
   document.getElementById('payNextNote').value = '';
@@ -1094,11 +1138,15 @@ payForm.addEventListener('submit', async (e)=>{
   e.preventDefault();
   const id = document.getElementById('payEntryId').value;
   const amt = parseFloat(document.getElementById('payAmount').value) || 0;
+  const paidOn = document.getElementById('payDate').value || todayStr();
   const nextDate = document.getElementById('payNextDate').value;
   const nextNote = document.getElementById('payNextNote').value.trim();
   entries = entries.map(en => {
     if(en.id !== id) return en;
-    const updated = {...en, paidAmount: Number(en.paidAmount) + amt};
+    const newPaid = Number(en.paidAmount) + amt;
+    const history = Array.isArray(en.paymentHistory) ? en.paymentHistory.slice() : [];
+    history.push({ date: paidOn, amount: amt, balanceAfter: Number(en.totalAmount) - newPaid });
+    const updated = {...en, paidAmount: newPaid, paymentHistory: history};
     if(nextDate) updated.nextPaymentDate = nextDate;
     if(nextNote) updated.nextPaymentNote = nextNote;
     if(!nextDate && !nextNote){ updated.nextPaymentDate=''; updated.nextPaymentNote=''; }
@@ -1155,6 +1203,7 @@ function render(){
           <div class="row-actions">
             ${balance > 0 ? `<button class="btn btn-pay btn-icon" onclick="openPayModal('${e.id}')">+ ${t('paymentBtn')}</button>` : ''}
             ${balance > 0 && e.contactMobile ? `<button class="btn btn-whatsapp btn-icon" onclick="sendReminder('${e.id}')">💬 ${t('remind')}</button>` : ''}
+            <button class="btn btn-ghost btn-icon" onclick="openHistoryModal('${e.id}')">📜 ${t('historyBtn')}</button>
             <button class="btn btn-ghost btn-icon" onclick="editEntry('${e.id}')">${t('edit')}</button>
             <button class="btn btn-ghost btn-icon" onclick="deleteEntry('${e.id}')">${t('delete')}</button>
           </div>
@@ -1172,6 +1221,39 @@ function escapeHtml(str){
 window.editEntry = function(id){ const entry = entries.find(e => e.id === id); if(entry) openModal(entry); };
 window.deleteEntry = deleteEntry;
 window.openPayModal = openPayModal;
+
+/* ---------- Payment History ---------- */
+const historyModalBackdrop = document.getElementById('historyModalBackdrop');
+window.openHistoryModal = function(id){
+  const entry = entries.find(e => e.id === id);
+  if(!entry) return;
+  document.getElementById('historyModalTitle').textContent = t('paymentHistoryFor').replace('{company}', entry.companyName);
+  const rawHistory = Array.isArray(entry.paymentHistory) ? entry.paymentHistory.slice() : [];
+  rawHistory.sort((a,b)=> (a.date||'').localeCompare(b.date||''));
+  let cumulative = 0;
+  const historyTableBody = document.getElementById('historyTableBody');
+  if(rawHistory.length === 0){
+    historyTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:22px; color:var(--text-secondary);">${t('noPaymentHistory')}</td></tr>`;
+  }else{
+    historyTableBody.innerHTML = rawHistory.map(h => {
+      cumulative += Number(h.amount) || 0;
+      const balanceAfter = Number(entry.totalAmount) - cumulative;
+      return `
+        <tr>
+          <td>${h.date || '—'}</td>
+          <td class="mono">${fmtMoney(h.amount)}</td>
+          <td class="mono">${fmtMoney(balanceAfter)}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+  document.getElementById('historyTotalAmount').textContent = fmtMoney(entry.totalAmount);
+  document.getElementById('historyPaidAmount').textContent = fmtMoney(entry.paidAmount);
+  document.getElementById('historyBalanceAmount').textContent = fmtMoney(Number(entry.totalAmount) - Number(entry.paidAmount));
+  historyModalBackdrop.classList.add('open');
+};
+document.getElementById('historyCloseBtn').addEventListener('click', ()=> historyModalBackdrop.classList.remove('open'));
+historyModalBackdrop.addEventListener('click', (e)=>{ if(e.target === historyModalBackdrop) historyModalBackdrop.classList.remove('open'); });
 
 document.getElementById('searchInput').addEventListener('input', render);
 
@@ -1387,15 +1469,17 @@ function importCompanyRows(rows){
     if(!companyName || isNaN(totalAmount)){ skippedInvalid++; return; }
     const contactMobile = String(getField(row, ['Mobile','Mobile Number','Phone'])).trim();
     if(contactMobile && findDuplicateMobile(contactMobile, null)){ skippedDup++; return; }
+    const paidAmount = parseFloat(getField(row, ['Paid Amount','Paid'])) || 0;
     entries.push({
       id: 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
       companyName,
       contactName: String(getField(row, ['Contact Person','Contact Name','Person'])).trim(),
       contactMobile,
       totalAmount,
-      paidAmount: parseFloat(getField(row, ['Paid Amount','Paid'])) || 0,
+      paidAmount,
       nextPaymentDate: excelDateToStr(getField(row, ['Next Payment Date','Next Payment','Date'])),
-      nextPaymentNote: String(getField(row, ['Note','Notes','Remark','Remarks'])).trim()
+      nextPaymentNote: String(getField(row, ['Note','Notes','Remark','Remarks'])).trim(),
+      paymentHistory: paidAmount > 0 ? [{ date: todayStr(), amount: paidAmount, balanceAfter: totalAmount - paidAmount }] : []
     });
     added++;
   });
