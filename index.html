@@ -1073,15 +1073,28 @@ entryForm.addEventListener('submit', async (e)=>{
     }
   }
 
+  const existingEntry = editingId ? entries.find(en => en.id === editingId) : null;
+  const newPaidAmount = parseFloat(document.getElementById('paidAmount').value) || 0;
+  const newTotalAmount = parseFloat(totalAmountRaw) || 0;
+  let paymentHistory = (existingEntry && Array.isArray(existingEntry.paymentHistory)) ? existingEntry.paymentHistory.slice() : [];
+  if(existingEntry){
+    const oldPaid = Number(existingEntry.paidAmount) || 0;
+    const delta = newPaidAmount - oldPaid;
+    if(delta > 0){
+      paymentHistory.push({ date: todayStr(), amount: delta, balanceAfter: newTotalAmount - newPaidAmount });
+    }
+  }
+
   const data = {
     id: editingId || 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
     companyName: companyName,
     contactName: document.getElementById('contactName').value.trim(),
     contactMobile: document.getElementById('contactMobile').value.trim(),
-    totalAmount: parseFloat(totalAmountRaw) || 0,
-    paidAmount: parseFloat(document.getElementById('paidAmount').value) || 0,
+    totalAmount: newTotalAmount,
+    paidAmount: newPaidAmount,
     nextPaymentDate: document.getElementById('nextPaymentDate').value,
-    nextPaymentNote: document.getElementById('nextPaymentNote').value.trim()
+    nextPaymentNote: document.getElementById('nextPaymentNote').value.trim(),
+    paymentHistory: paymentHistory
   };
   const previousEntries = entries;
   if(editingId){
@@ -1189,13 +1202,23 @@ function render(){
     if(e.nextPaymentDate || e.nextPaymentNote){
       nextPayHtml = `<div class="next-pay">${e.nextPaymentDate ? `<div class="date">${e.nextPaymentDate}</div>` : ''}${e.nextPaymentNote ? `<div class="note">${escapeHtml(e.nextPaymentNote)}</div>` : ''}</div>`;
     }
+    const sortedHistory = Array.isArray(e.paymentHistory) ? e.paymentHistory.slice().sort((a,b)=> (a.date||'').localeCompare(b.date||'')) : [];
+    let paidCellHtml = `<div class="mono" style="font-weight:600;">${fmtMoney(e.paidAmount)}</div>`;
+    if(sortedHistory.length){
+      const maxShow = 3;
+      const shown = sortedHistory.slice(-maxShow);
+      paidCellHtml += `<div style="margin-top:4px; display:flex; flex-direction:column; gap:2px;">` +
+        shown.map(h => `<div style="font-size:11px; color:var(--text-secondary); white-space:nowrap;">${h.date || '—'}: <span class="mono">${fmtMoney(h.amount)}</span></div>`).join('') +
+        (sortedHistory.length > maxShow ? `<div style="font-size:11px; color:var(--violet-bright); cursor:pointer;" onclick="openHistoryModal('${e.id}')">+${sortedHistory.length - maxShow} more…</div>` : '') +
+        `</div>`;
+    }
     return `
       <tr class="${rowClass}">
         <td><div class="cust-name">${escapeHtml(e.companyName)}</div></td>
         <td>${e.contactName ? escapeHtml(e.contactName) : '<span style="color:var(--text-secondary)">—</span>'}</td>
         <td class="mono">${e.contactMobile ? escapeHtml(e.contactMobile) : '<span style="color:var(--text-secondary)">—</span>'}</td>
         <td class="mono">${fmtMoney(e.totalAmount)}</td>
-        <td class="mono">${fmtMoney(e.paidAmount)}</td>
+        <td>${paidCellHtml}</td>
         <td class="mono">${fmtMoney(balance)}</td>
         <td><span class="badge ${e.status}">${statusLabel}</span></td>
         <td>${nextPayHtml}</td>
