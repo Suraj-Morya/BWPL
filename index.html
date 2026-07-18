@@ -618,6 +618,10 @@ const translations = {
     processingFile: 'Processing file...',
     bulkUploadErrorPrefix: 'Error reading file: ',
     bulkUploadResult: '{added} added, {skippedInvalid} skipped (invalid), {skippedDup} skipped (duplicate mobile)',
+    bulkUploadColumnsFound: 'Columns found in your file',
+    bulkUploadNoColumns: 'none — file seems empty',
+    bulkUploadEmptyFile: 'No data rows found in this file. Please check the file and try again.',
+    bulkUploadLibMissing: 'Excel engine failed to load — check your internet connection and reload the page, then try again.',
     historyBtn: 'History',
     paymentHistoryFor: 'Payment History — {company}',
     noPaymentHistory: 'No dated payments recorded yet. New payments will appear here with date-wise amount and balance.',
@@ -740,6 +744,10 @@ const translations = {
     processingFile: 'फ़ाइल प्रोसेस हो रही है...',
     bulkUploadErrorPrefix: 'फ़ाइल पढ़ने में त्रुटि: ',
     bulkUploadResult: '{added} जोड़े गए, {skippedInvalid} स्किप (अमान्य), {skippedDup} स्किप (डुप्लिकेट मोबाइल)',
+    bulkUploadColumnsFound: 'आपकी फ़ाइल में ये कॉलम मिले',
+    bulkUploadNoColumns: 'कोई नहीं — फ़ाइल खाली लग रही है',
+    bulkUploadEmptyFile: 'इस फ़ाइल में कोई डेटा नहीं मिला। कृपया फ़ाइल जांच कर दोबारा कोशिश करें।',
+    bulkUploadLibMissing: 'Excel इंजन लोड नहीं हो पाया — इंटरनेट कनेक्शन जांचें, पेज रीलोड करें और फिर कोशिश करें।',
     historyBtn: 'हिस्ट्री',
     paymentHistoryFor: 'भुगतान हिस्ट्री — {company}',
     noPaymentHistory: 'अभी तक कोई तारीख़वार भुगतान दर्ज नहीं हुआ। नए भुगतान यहां तारीख, राशि और शेष राशि के साथ दिखेंगे।',
@@ -1470,6 +1478,10 @@ bulkModalBackdrop.addEventListener('click', (e)=>{ if(e.target === bulkModalBack
 document.getElementById('bulkChooseFileBtn').addEventListener('click', ()=> bulkFileInput.click());
 
 document.getElementById('bulkDownloadSampleBtn').addEventListener('click', ()=>{
+  if(typeof XLSX === 'undefined'){
+    bulkUploadStatus.textContent = t('bulkUploadLibMissing');
+    return;
+  }
   let data, filename;
   if(bulkUploadType === 'company'){
     data = [{ 'Company Name':'ABC Traders', 'Contact Person':'Rahul Sharma', 'Mobile':'9876543210', 'Total Amount':50000, 'Paid Amount':10000, 'Next Payment Date':'2026-08-15', 'Note':'Next week' }];
@@ -1487,20 +1499,20 @@ document.getElementById('bulkDownloadSampleBtn').addEventListener('click', ()=>{
 function importCompanyRows(rows){
   let added = 0, skippedInvalid = 0, skippedDup = 0;
   rows.forEach(row => {
-    const companyName = String(getField(row, ['Company Name','Company','Name'])).trim();
-    const totalAmount = parseFloat(getField(row, ['Total Amount','Total','Amount']));
+    const companyName = String(getField(row, ['Company Name','Company','Name','Party Name','Firm Name','Customer Name','Client Name','Business Name'])).trim();
+    const totalAmount = parseFloat(getField(row, ['Total Amount','Total','Amount','Bill Amount','Invoice Amount','Order Amount']));
     if(!companyName || isNaN(totalAmount)){ skippedInvalid++; return; }
-    const contactMobile = String(getField(row, ['Mobile','Mobile Number','Phone'])).trim();
+    const contactMobile = String(getField(row, ['Mobile','Mobile Number','Mobile No','Mob','Mob No','Phone','Phone Number','Contact Number','Contact No','Ph','Cell','Cell Number','WhatsApp','WhatsApp Number'])).trim();
     if(contactMobile && findDuplicateMobile(contactMobile, null)){ skippedDup++; return; }
-    const paidAmount = parseFloat(getField(row, ['Paid Amount','Paid'])) || 0;
+    const paidAmount = parseFloat(getField(row, ['Paid Amount','Paid','Received','Received Amount','Advance'])) || 0;
     entries.push({
       id: 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
       companyName,
-      contactName: String(getField(row, ['Contact Person','Contact Name','Person'])).trim(),
+      contactName: String(getField(row, ['Contact Person','Contact Name','Person','Contact'])).trim(),
       contactMobile,
       totalAmount,
       paidAmount,
-      nextPaymentDate: excelDateToStr(getField(row, ['Next Payment Date','Next Payment','Date'])),
+      nextPaymentDate: excelDateToStr(getField(row, ['Next Payment Date','Next Payment','Due Date','Date'])),
       nextPaymentNote: String(getField(row, ['Note','Notes','Remark','Remarks'])).trim(),
       paymentHistory: paidAmount > 0 ? [{ date: todayStr(), amount: paidAmount, balanceAfter: totalAmount - paidAmount }] : []
     });
@@ -1508,16 +1520,22 @@ function importCompanyRows(rows){
   });
   persist();
   render();
-  bulkModalBackdrop.classList.remove('open');
-  showToast(t('bulkUploadResult').replace('{added}',added).replace('{skippedInvalid}',skippedInvalid).replace('{skippedDup}',skippedDup));
+  if(added > 0) bulkModalBackdrop.classList.remove('open');
+  let msg = t('bulkUploadResult').replace('{added}',added).replace('{skippedInvalid}',skippedInvalid).replace('{skippedDup}',skippedDup);
+  if(added === 0 && rows.length > 0){
+    const foundCols = Object.keys(rows[0] || {}).join(', ');
+    msg += ' — ' + t('bulkUploadColumnsFound') + ': ' + (foundCols || t('bulkUploadNoColumns'));
+  }
+  showToast(msg, added === 0);
+  bulkUploadStatus.textContent = msg;
 }
 
 function importEnquiryRows(rows){
   let added = 0, skippedInvalid = 0, skippedDup = 0;
   rows.forEach(row => {
-    const name = String(getField(row, ['Name / Company','Name','Company'])).trim();
+    const name = String(getField(row, ['Name / Company','Name','Company','Party Name','Firm Name','Customer Name','Client Name'])).trim();
     if(!name){ skippedInvalid++; return; }
-    const mobile = String(getField(row, ['Mobile','Mobile Number','Phone'])).trim();
+    const mobile = String(getField(row, ['Mobile','Mobile Number','Mobile No','Mob','Mob No','Phone','Phone Number','Contact Number','Contact No','Ph','Cell','Cell Number','WhatsApp','WhatsApp Number'])).trim();
     if(mobile && findDuplicateMobile(mobile, null)){ skippedDup++; return; }
     enquiries.push({
       id: 'q_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
@@ -1530,21 +1548,40 @@ function importEnquiryRows(rows){
   });
   persistEnquiries();
   renderEnquiries();
-  bulkModalBackdrop.classList.remove('open');
-  showToast(t('bulkUploadResult').replace('{added}',added).replace('{skippedInvalid}',skippedInvalid).replace('{skippedDup}',skippedDup));
+  if(added > 0) bulkModalBackdrop.classList.remove('open');
+  let msg = t('bulkUploadResult').replace('{added}',added).replace('{skippedInvalid}',skippedInvalid).replace('{skippedDup}',skippedDup);
+  if(added === 0 && rows.length > 0){
+    const foundCols = Object.keys(rows[0] || {}).join(', ');
+    msg += ' — ' + t('bulkUploadColumnsFound') + ': ' + (foundCols || t('bulkUploadNoColumns'));
+  }
+  showToast(msg, added === 0);
+  bulkUploadStatus.textContent = msg;
 }
 
 bulkFileInput.addEventListener('change', (e)=>{
   const file = e.target.files[0];
   if(!file) return;
+  if(typeof XLSX === 'undefined'){
+    bulkUploadStatus.textContent = t('bulkUploadLibMissing');
+    bulkFileInput.value = '';
+    return;
+  }
   bulkUploadStatus.textContent = t('processingFile');
   const reader = new FileReader();
   reader.onload = function(evt){
     try{
       const data = new Uint8Array(evt.target.result);
       const wb = XLSX.read(data, {type:'array'});
+      if(!wb.SheetNames || wb.SheetNames.length === 0){
+        bulkUploadStatus.textContent = t('bulkUploadEmptyFile');
+        return;
+      }
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(sheet, {defval:''});
+      if(rows.length === 0){
+        bulkUploadStatus.textContent = t('bulkUploadEmptyFile');
+        return;
+      }
       if(bulkUploadType === 'company') importCompanyRows(rows); else importEnquiryRows(rows);
     }catch(err){
       bulkUploadStatus.textContent = t('bulkUploadErrorPrefix') + (err && err.message ? err.message : '');
