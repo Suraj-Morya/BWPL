@@ -145,6 +145,21 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
 .toast{ position:fixed; bottom:24px; right:24px; background:linear-gradient(135deg,var(--bg-panel-2),var(--bg-panel)); border:1px solid var(--violet); color:var(--text-primary); padding:12px 18px; border-radius:12px; font-size:13px; box-shadow:0 15px 40px -10px rgba(0,0,0,0.7); opacity:0; transform:translateY(10px); transition:all .25s ease; z-index:60; }
 .toast.show{ opacity:1; transform:translateY(0); }
 
+.due-banner{ display:none; align-items:center; gap:14px; padding:14px 18px; border-radius:14px; margin-bottom:18px; border:1px solid rgba(251,191,75,0.4); background:rgba(251,191,75,0.10); }
+.due-banner.show{ display:flex; }
+.due-banner .icon{ font-size:20px; }
+.due-banner .text{ flex:1; font-size:13.5px; color:var(--text-primary); }
+.due-banner .text b{ color:var(--warning); }
+.due-banner-close{ background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:16px; padding:2px 6px; }
+.due-list{ display:none; flex-direction:column; gap:8px; margin-bottom:18px; }
+.due-list.show{ display:flex; }
+.due-item{ display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:12px; }
+.due-item .name{ font-weight:600; flex:1; }
+.due-item .amt{ font-family:'JetBrains Mono',monospace; color:var(--danger); }
+.btn-whatsapp{ background:rgba(37,211,102,0.18); color:#25D366; border:1px solid rgba(37,211,102,0.45); }
+.btn-whatsapp:hover{ background:rgba(37,211,102,0.28); }
+.settings-btn{ padding:10px 12px; }
+
 @media (max-width:820px){
   .stats{ grid-template-columns:1fr 1fr; }
   .form-grid{ grid-template-columns:1fr; }
@@ -217,6 +232,13 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
 </div>
 <div class="shared-note" data-i18n="sharedNote">🔗 Shared team data — all employees who open this link will see the same data.</div>
 
+<div class="due-banner glass" id="dueBanner">
+  <div class="icon">⏰</div>
+  <div class="text" id="dueBannerText"></div>
+  <button class="due-banner-close" id="dueBannerClose">✕</button>
+</div>
+<div class="due-list" id="dueList"></div>
+
 <div class="stats">
   <div class="stat-card copper glass"><div class="label" data-i18n="totalAmountAll">Total Amount (All Companies)</div><div class="value" id="statTotal">₹0</div></div>
   <div class="stat-card success glass"><div class="label" data-i18n="totalPaidTillNow">Total Paid Till Now</div><div class="value" id="statPaid">₹0</div></div>
@@ -225,6 +247,7 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
 
 <div class="toolbar">
   <input class="search-input" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="Search by company, name or mobile number...">
+  <button class="btn btn-ghost settings-btn" id="templateBtn" title="Reminder message template">✏️ <span data-i18n="messageTemplate">Message Template</span></button>
   <button class="btn btn-primary" id="addBtn" data-i18n="newCompany">+ New Company</button>
 </div>
 
@@ -286,6 +309,22 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" id="payCancelBtn" data-i18n="cancel">Cancel</button>
         <button type="submit" class="btn btn-primary" data-i18n="savePayment">Save Payment</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="templateModalBackdrop">
+  <div class="modal glass" style="max-width:480px;">
+    <h3 data-i18n="messageTemplateTitle">Reminder Message Template</h3>
+    <form id="templateForm">
+      <div class="field">
+        <label data-i18n="templateHelp">Use {company}, {contact}, {balance}, {date}</label>
+        <textarea id="templateText" rows="5" style="width:100%; resize:vertical;"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="templateCancelBtn" data-i18n="cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary" data-i18n="save">Save</button>
       </div>
     </form>
   </div>
@@ -362,7 +401,15 @@ const translations = {
     storageError: 'Storage error — changes were not saved',
     paymentBtn: 'Payment',
     edit: 'Edit',
-    delete: 'Delete'
+    delete: 'Delete',
+    remind: 'Remind',
+    messageTemplate: 'Message Template',
+    messageTemplateTitle: 'Reminder Message Template',
+    templateHelp: 'Use {company}, {contact}, {balance}, {date}',
+    dueBannerSingle: '<b>{count} company</b> has payment due today — reminders ready below.',
+    dueBannerMultiple: '<b>{count} companies</b> have payment due today or overdue — reminders ready below.',
+    sendReminderBtn: 'Send WhatsApp Reminder',
+    noMobileForReminder: 'No mobile number saved for this company'
   },
   hi: {
     signIn: 'साइन इन करें',
@@ -429,7 +476,15 @@ const translations = {
     storageError: 'स्टोरेज त्रुटि — बदलाव सेव नहीं हुए',
     paymentBtn: 'भुगतान',
     edit: 'संपादित करें',
-    delete: 'हटाएं'
+    delete: 'हटाएं',
+    remind: 'रिमाइंडर',
+    messageTemplate: 'मैसेज टेम्पलेट',
+    messageTemplateTitle: 'रिमाइंडर मैसेज टेम्पलेट',
+    templateHelp: '{company}, {contact}, {balance}, {date} का उपयोग करें',
+    dueBannerSingle: '<b>{count} कंपनी</b> का आज भुगतान देय है — रिमाइंडर नीचे तैयार हैं।',
+    dueBannerMultiple: '<b>{count} कंपनियों</b> का भुगतान आज देय है या अतिदेय है — रिमाइंडर नीचे तैयार हैं।',
+    sendReminderBtn: 'WhatsApp रिमाइंडर भेजें',
+    noMobileForReminder: 'इस कंपनी के लिए मोबाइल नंबर सेव नहीं है'
   }
 };
 let currentLang = localStorage.getItem('bwpl-lang') || 'en';
@@ -546,6 +601,85 @@ function computeStatus(e){
   if(e.nextPaymentDate && e.nextPaymentDate < todayStr()) return 'overdue';
   if(Number(e.paidAmount) > 0) return 'partial';
   return 'pending';
+}
+
+const TEMPLATE_KEY = 'bwpl-reminder-template';
+const DEFAULT_TEMPLATE_EN = 'Dear {contact}, this is a reminder from Bajrang Wire India that a payment of ₹{balance} is due for {company}. Kindly arrange the payment at the earliest. Thank you.';
+const DEFAULT_TEMPLATE_HI = 'नमस्ते {contact}, यह Bajrang Wire India की ओर से एक रिमाइंडर है कि {company} के लिए ₹{balance} का भुगतान देय है। कृपया जल्द से जल्द भुगतान करें। धन्यवाद।';
+
+function getTemplate(){
+  return localStorage.getItem(TEMPLATE_KEY) || (currentLang === 'hi' ? DEFAULT_TEMPLATE_HI : DEFAULT_TEMPLATE_EN);
+}
+
+function buildReminderMessage(entry){
+  const balance = Number(entry.totalAmount) - Number(entry.paidAmount);
+  return getTemplate()
+    .replace(/{company}/g, entry.companyName || '')
+    .replace(/{contact}/g, entry.contactName || entry.companyName || '')
+    .replace(/{balance}/g, Number(balance||0).toLocaleString('en-IN', {maximumFractionDigits:0}))
+    .replace(/{date}/g, entry.nextPaymentDate || '');
+}
+
+window.sendReminder = function(id){
+  const entry = entries.find(e => e.id === id);
+  if(!entry) return;
+  if(!entry.contactMobile){ showToast(t('noMobileForReminder'), true); return; }
+  let mobile = entry.contactMobile.replace(/[^0-9]/g, '');
+  if(mobile.length === 10) mobile = '91' + mobile;
+  const message = encodeURIComponent(buildReminderMessage(entry));
+  window.open(`https://wa.me/${mobile}?text=${message}`, '_blank');
+};
+
+const templateModalBackdrop = document.getElementById('templateModalBackdrop');
+const templateForm = document.getElementById('templateForm');
+const templateText = document.getElementById('templateText');
+document.getElementById('templateBtn').addEventListener('click', ()=>{
+  templateText.value = getTemplate();
+  templateModalBackdrop.classList.add('open');
+});
+document.getElementById('templateCancelBtn').addEventListener('click', ()=> templateModalBackdrop.classList.remove('open'));
+templateModalBackdrop.addEventListener('click', (e)=>{ if(e.target === templateModalBackdrop) templateModalBackdrop.classList.remove('open'); });
+templateForm.addEventListener('submit', (e)=>{
+  e.preventDefault();
+  localStorage.setItem(TEMPLATE_KEY, templateText.value);
+  templateModalBackdrop.classList.remove('open');
+  showToast(t('savedSuccessfully'));
+});
+
+const dueBanner = document.getElementById('dueBanner');
+const dueBannerText = document.getElementById('dueBannerText');
+const dueList = document.getElementById('dueList');
+document.getElementById('dueBannerClose').addEventListener('click', ()=>{
+  dueBanner.classList.remove('show');
+  dueList.classList.remove('show');
+});
+
+function renderDueReminders(){
+  const today = todayStr();
+  const due = entries.filter(e => {
+    const balance = Number(e.totalAmount) - Number(e.paidAmount);
+    return balance > 0 && e.nextPaymentDate && e.nextPaymentDate <= today;
+  });
+  if(due.length === 0){
+    dueBanner.classList.remove('show');
+    dueList.classList.remove('show');
+    dueList.innerHTML = '';
+    return;
+  }
+  const key = due.length === 1 ? 'dueBannerSingle' : 'dueBannerMultiple';
+  dueBannerText.innerHTML = t(key).replace('{count}', due.length);
+  dueBanner.classList.add('show');
+  dueList.innerHTML = due.map(e => {
+    const balance = Number(e.totalAmount) - Number(e.paidAmount);
+    return `
+      <div class="due-item glass">
+        <span class="name">${escapeHtml(e.companyName)}</span>
+        <span class="amt">${fmtMoney(balance)}</span>
+        ${e.contactMobile ? `<button class="btn btn-whatsapp btn-icon" onclick="sendReminder('${e.id}')">💬 ${t('sendReminderBtn')}</button>` : ''}
+      </div>
+    `;
+  }).join('');
+  dueList.classList.add('show');
 }
 
 async function loadEntries(){
@@ -699,6 +833,7 @@ function render(){
   document.getElementById('statTotal').textContent = fmtMoney(totalAmount);
   document.getElementById('statPaid').textContent = fmtMoney(totalPaid);
   document.getElementById('statBalance').textContent = fmtMoney(totalBalance);
+  renderDueReminders();
 
   if(list.length === 0){ tableBody.innerHTML = ''; emptyState.style.display = 'block'; return; }
   emptyState.style.display = 'none';
@@ -724,6 +859,7 @@ function render(){
         <td>
           <div class="row-actions">
             ${balance > 0 ? `<button class="btn btn-pay btn-icon" onclick="openPayModal('${e.id}')">+ ${t('paymentBtn')}</button>` : ''}
+            ${balance > 0 && e.contactMobile ? `<button class="btn btn-whatsapp btn-icon" onclick="sendReminder('${e.id}')">💬 ${t('remind')}</button>` : ''}
             <button class="btn btn-ghost btn-icon" onclick="editEntry('${e.id}')">${t('edit')}</button>
             <button class="btn btn-ghost btn-icon" onclick="deleteEntry('${e.id}')">${t('delete')}</button>
           </div>
