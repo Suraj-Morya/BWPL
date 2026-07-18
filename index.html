@@ -22,6 +22,26 @@
   --border:rgba(255,255,255,0.09);
   --glow-violet:rgba(139,92,246,0.45);
 }
+[data-theme="light"]{
+  --bg-deep:#f3f1fb;
+  --bg-panel:rgba(255,255,255,0.80);
+  --bg-panel-2:rgba(240,237,252,0.85);
+  --violet:#7C3AED;
+  --violet-bright:#6D28D9;
+  --cyan:#0E7490;
+  --pink:#DB2777;
+  --success:#047857;
+  --warning:#B45309;
+  --danger:#DC2626;
+  --text-primary:#1E1B2E;
+  --text-secondary:#6B6580;
+  --border:rgba(30,20,60,0.10);
+  --glow-violet:rgba(124,58,237,0.20);
+}
+[data-theme="light"] .scene{ opacity:0.3; }
+[data-theme="light"] .grid-floor{ opacity:0.5; }
+[data-theme="light"] input, [data-theme="light"] select, [data-theme="light"] textarea{ background:rgba(0,0,0,0.03); }
+[data-theme="light"] .header-text .display, [data-theme="light"] .modal h3, [data-theme="light"] .login-box h3{ -webkit-text-fill-color:initial; background:linear-gradient(90deg,var(--violet-bright),var(--cyan)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
 *{box-sizing:border-box; margin:0; padding:0;}
 html{ background:var(--bg-deep); }
 body{
@@ -166,6 +186,32 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
 .view-hidden{ display:none !important; }
 .remarks-cell{ max-width:280px; white-space:pre-wrap; font-size:13px; color:var(--text-secondary); }
 
+.theme-toggle{ display:flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:10px; border:1px solid var(--border); background:rgba(255,255,255,0.05); color:var(--text-primary); cursor:pointer; font-size:16px; transition:all .15s ease; }
+.theme-toggle:hover{ border-color:var(--violet); background:rgba(139,92,246,0.1); }
+.login-theme-toggle{ position:absolute; top:16px; right:16px; }
+
+.calendar-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.calendar-header .month-label{ font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:600; }
+.calendar-nav{ display:flex; gap:8px; }
+.calendar-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:8px; margin-bottom:22px; }
+.calendar-weekday{ text-align:center; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-secondary); font-weight:600; padding-bottom:4px; }
+.calendar-day{ min-height:78px; border-radius:12px; padding:8px; cursor:default; border:1px solid var(--border); position:relative; transition:box-shadow .15s ease; }
+.calendar-day.empty{ background:transparent; border-color:transparent; }
+.calendar-day.has-due{ cursor:pointer; }
+.calendar-day.has-due:hover{ box-shadow:0 0 0 2px var(--violet); }
+.calendar-day .day-num{ font-size:12.5px; font-weight:600; color:var(--text-secondary); }
+.calendar-day.is-today .day-num{ color:var(--cyan); }
+.calendar-day.selected{ box-shadow:0 0 0 2px var(--violet-bright); }
+.calendar-dot-row{ display:flex; flex-wrap:wrap; gap:3px; margin-top:6px; }
+.calendar-dot{ width:7px; height:7px; border-radius:50%; }
+.calendar-dot.overdue{ background:var(--danger); }
+.calendar-dot.due-today{ background:var(--warning); }
+.calendar-dot.upcoming{ background:var(--cyan); }
+.calendar-count{ font-size:10.5px; color:var(--text-secondary); margin-top:2px; }
+.calendar-day-detail{ display:none; flex-direction:column; gap:8px; }
+.calendar-day-detail.show{ display:flex; }
+.calendar-day-detail .detail-title{ font-family:'Space Grotesk',sans-serif; font-size:15px; margin-bottom:4px; }
+
 @media (max-width:820px){
   .stats{ grid-template-columns:1fr 1fr; }
   .form-grid{ grid-template-columns:1fr; }
@@ -203,7 +249,8 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
 </div>
 
 <div class="login-screen glass" id="loginScreen">
-  <div class="login-box glass">
+  <div class="login-box glass" style="position:relative;">
+    <button type="button" class="theme-toggle login-theme-toggle" id="loginThemeToggle">🌙</button>
     <div class="login-lang-switch" id="loginLangSwitch">
       <button type="button" data-lang="en">English</button>
       <button type="button" data-lang="hi">हिंदी</button>
@@ -234,6 +281,7 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
     <button type="button" data-lang="en">EN</button>
     <button type="button" data-lang="hi">हि</button>
   </div>
+  <button type="button" class="theme-toggle" id="themeToggle">🌙</button>
   <button class="btn btn-ghost logout-btn" id="logoutBtn" data-i18n="logout">Logout</button>
 </div>
 <div class="shared-note" data-i18n="sharedNote">🔗 Shared team data — all employees who open this link will see the same data.</div>
@@ -241,6 +289,7 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
 <div class="tabs">
   <button type="button" class="tab-btn active" id="tabPaymentsBtn" data-i18n="tabPayments">Payment Tracker</button>
   <button type="button" class="tab-btn" id="tabEnquiryBtn" data-i18n="tabActiveEnquiry">Active Enquiry</button>
+  <button type="button" class="tab-btn" id="tabCalendarBtn" data-i18n="tabCalendar">Calendar</button>
 </div>
 
 <div id="paymentsView">
@@ -392,7 +441,20 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
 
 </div>
 
+<div id="calendarView" class="view-hidden">
+  <div class="table-wrap glass" style="padding:20px;">
+    <div class="calendar-header">
+      <button type="button" class="btn btn-ghost btn-icon" id="calPrevBtn">← <span data-i18n="calPrev">Prev</span></button>
+      <div class="month-label" id="calMonthLabel"></div>
+      <button type="button" class="btn btn-ghost btn-icon" id="calNextBtn"><span data-i18n="calNext">Next</span> →</button>
+    </div>
+    <div class="calendar-grid" id="calendarGrid"></div>
+    <div class="calendar-day-detail" id="calendarDayDetail"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
+
 
 <script>
 const translations = {
@@ -486,7 +548,16 @@ const translations = {
     remarksLabel: 'Remarks',
     remarksPh: 'e.g. Interested in bulk order, follow up next week...',
     enquiryNameRequired: 'Name / Company is required',
-    confirmDeleteEnquiry: 'Delete this enquiry? This action cannot be undone.'
+    confirmDeleteEnquiry: 'Delete this enquiry? This action cannot be undone.',
+    tabCalendar: 'Calendar',
+    calPrev: 'Prev',
+    calNext: 'Next',
+    calNoDue: 'No payments due on this day.',
+    calDueOn: 'Payments due on',
+    lightMode: 'Switch to light mode',
+    darkMode: 'Switch to dark mode',
+    weekdays: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+    months: ['January','February','March','April','May','June','July','August','September','October','November','December']
   },
   hi: {
     signIn: 'साइन इन करें',
@@ -578,7 +649,16 @@ const translations = {
     remarksLabel: 'रिमार्क्स',
     remarksPh: 'जैसे थोक ऑर्डर में रुचि, अगले सप्ताह फॉलो-अप करें...',
     enquiryNameRequired: 'नाम / कंपनी आवश्यक है',
-    confirmDeleteEnquiry: 'इस एन्क्वायरी को हटाएं? यह क्रिया वापस नहीं ली जा सकती।'
+    confirmDeleteEnquiry: 'इस एन्क्वायरी को हटाएं? यह क्रिया वापस नहीं ली जा सकती।',
+    tabCalendar: 'कैलेंडर',
+    calPrev: 'पिछला',
+    calNext: 'अगला',
+    calNoDue: 'इस दिन कोई भुगतान देय नहीं है।',
+    calDueOn: 'भुगतान देय है',
+    lightMode: 'लाइट मोड पर जाएं',
+    darkMode: 'डार्क मोड पर जाएं',
+    weekdays: ['रवि','सोम','मंगल','बुध','गुरु','शुक्र','शनि'],
+    months: ['जनवरी','फ़रवरी','मार्च','अप्रैल','मई','जून','जुलाई','अगस्त','सितंबर','अक्टूबर','नवंबर','दिसंबर']
   }
 };
 let currentLang = localStorage.getItem('bwpl-lang') || 'en';
@@ -601,6 +681,7 @@ function applyTranslations(){
   });
   if(typeof render === 'function' && typeof entries !== 'undefined') render();
   if(typeof renderEnquiries === 'function' && typeof enquiries !== 'undefined') renderEnquiries();
+  if(typeof renderCalendar === 'function' && typeof calendarViewDate !== 'undefined') renderCalendar();
 }
 
 function setLang(lang){
@@ -613,6 +694,30 @@ document.querySelectorAll('.lang-switch button, .login-lang-switch button').forE
   btn.addEventListener('click', () => setLang(btn.getAttribute('data-lang')));
 });
 
+/* ---------- Theme ---------- */
+let currentTheme = localStorage.getItem('bwpl-theme') || 'dark';
+
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme', currentTheme === 'light' ? 'light' : '');
+  const icon = currentTheme === 'light' ? '☀️' : '🌙';
+  const title = t(currentTheme === 'light' ? 'darkMode' : 'lightMode');
+  document.querySelectorAll('#themeToggle, #loginThemeToggle').forEach(btn => {
+    btn.textContent = icon;
+    btn.title = title;
+  });
+}
+
+function setTheme(theme){
+  currentTheme = theme;
+  localStorage.setItem('bwpl-theme', theme);
+  applyTheme();
+}
+
+document.querySelectorAll('#themeToggle, #loginThemeToggle').forEach(btn => {
+  btn.addEventListener('click', () => setTheme(currentTheme === 'light' ? 'dark' : 'light'));
+});
+
+applyTheme();
 applyTranslations();
 </script>
 <script>
@@ -978,22 +1083,27 @@ document.getElementById('searchInput').addEventListener('input', render);
 /* ---------- Tabs ---------- */
 const paymentsView = document.getElementById('paymentsView');
 const enquiryView = document.getElementById('enquiryView');
+const calendarView = document.getElementById('calendarView');
 const tabPaymentsBtn = document.getElementById('tabPaymentsBtn');
 const tabEnquiryBtn = document.getElementById('tabEnquiryBtn');
+const tabCalendarBtn = document.getElementById('tabCalendarBtn');
 
-tabPaymentsBtn.addEventListener('click', ()=>{
-  tabPaymentsBtn.classList.add('active');
-  tabEnquiryBtn.classList.remove('active');
-  paymentsView.classList.remove('view-hidden');
-  enquiryView.classList.add('view-hidden');
-});
-tabEnquiryBtn.addEventListener('click', ()=>{
-  tabEnquiryBtn.classList.add('active');
-  tabPaymentsBtn.classList.remove('active');
-  enquiryView.classList.remove('view-hidden');
-  paymentsView.classList.add('view-hidden');
-  renderEnquiries();
-});
+const allTabs = [
+  { btn: tabPaymentsBtn, view: paymentsView, onShow: null },
+  { btn: tabEnquiryBtn, view: enquiryView, onShow: () => renderEnquiries() },
+  { btn: tabCalendarBtn, view: calendarView, onShow: () => renderCalendar() }
+];
+
+function switchTab(activeEntry){
+  allTabs.forEach(entry => {
+    const isActive = entry === activeEntry;
+    entry.btn.classList.toggle('active', isActive);
+    entry.view.classList.toggle('view-hidden', !isActive);
+  });
+  if(activeEntry.onShow) activeEntry.onShow();
+}
+
+allTabs.forEach(entry => entry.btn.addEventListener('click', () => switchTab(entry)));
 
 /* ---------- Active Enquiry ---------- */
 const ENQUIRY_STORAGE_KEY = 'bajrang-wire-active-enquiries';
@@ -1105,6 +1215,106 @@ window.deleteEnquiryEntry = deleteEnquiry;
 document.getElementById('enquirySearchInput').addEventListener('input', renderEnquiries);
 
 loadEnquiries();
+
+/* ---------- Calendar View ---------- */
+let calendarViewDate = new Date();
+calendarViewDate.setDate(1);
+let selectedCalendarDate = null;
+
+const calendarGrid = document.getElementById('calendarGrid');
+const calMonthLabel = document.getElementById('calMonthLabel');
+const calendarDayDetail = document.getElementById('calendarDayDetail');
+
+document.getElementById('calPrevBtn').addEventListener('click', ()=>{
+  calendarViewDate.setMonth(calendarViewDate.getMonth() - 1);
+  selectedCalendarDate = null;
+  renderCalendar();
+});
+document.getElementById('calNextBtn').addEventListener('click', ()=>{
+  calendarViewDate.setMonth(calendarViewDate.getMonth() + 1);
+  selectedCalendarDate = null;
+  renderCalendar();
+});
+
+function dueEntriesForDate(dateStr){
+  return entries.filter(e => {
+    const balance = Number(e.totalAmount) - Number(e.paidAmount);
+    return balance > 0 && e.nextPaymentDate === dateStr;
+  });
+}
+
+function renderCalendarDayDetail(){
+  if(!selectedCalendarDate){ calendarDayDetail.classList.remove('show'); calendarDayDetail.innerHTML=''; return; }
+  const due = dueEntriesForDate(selectedCalendarDate);
+  let html = `<div class="detail-title">${t('calDueOn')} ${selectedCalendarDate}</div>`;
+  if(due.length === 0){
+    html += `<div style="color:var(--text-secondary); font-size:13px;">${t('calNoDue')}</div>`;
+  }else{
+    html += due.map(e => {
+      const balance = Number(e.totalAmount) - Number(e.paidAmount);
+      return `
+        <div class="due-item glass">
+          <span class="name">${escapeHtml(e.companyName)}</span>
+          <span class="amt">${fmtMoney(balance)}</span>
+          ${e.contactMobile ? `<button class="btn btn-whatsapp btn-icon" onclick="sendReminder('${e.id}')">💬 ${t('sendReminderBtn')}</button>` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+  calendarDayDetail.innerHTML = html;
+  calendarDayDetail.classList.add('show');
+}
+
+window.selectCalendarDay = function(dateStr){
+  selectedCalendarDate = dateStr;
+  renderCalendar();
+};
+
+function renderCalendar(){
+  const year = calendarViewDate.getFullYear();
+  const month = calendarViewDate.getMonth();
+  const monthNames = t('months');
+  const weekdayNames = t('weekdays');
+  calMonthLabel.textContent = `${monthNames[month]} ${year}`;
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = todayStr();
+
+  let html = weekdayNames.map(d => `<div class="calendar-weekday">${d}</div>`).join('');
+
+  for(let i = 0; i < firstDay; i++){
+    html += `<div class="calendar-day empty"></div>`;
+  }
+
+  for(let day = 1; day <= daysInMonth; day++){
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const due = dueEntriesForDate(dateStr);
+    const isToday = dateStr === today;
+    const isSelected = dateStr === selectedCalendarDate;
+    let dots = '';
+    if(due.length > 0){
+      dots = '<div class="calendar-dot-row">' + due.slice(0,6).map(e => {
+        let cls = 'upcoming';
+        if(dateStr < today) cls = 'overdue';
+        else if(dateStr === today) cls = 'due-today';
+        return `<span class="calendar-dot ${cls}"></span>`;
+      }).join('') + '</div>';
+    }
+    const countLabel = due.length > 0 ? `<div class="calendar-count">${due.length}</div>` : '';
+    html += `
+      <div class="calendar-day glass ${due.length > 0 ? 'has-due' : ''} ${isToday ? 'is-today' : ''} ${isSelected ? 'selected' : ''}"
+           ${due.length > 0 ? `onclick="selectCalendarDay('${dateStr}')"` : ''}>
+        <div class="day-num">${day}</div>
+        ${dots}
+        ${countLabel}
+      </div>
+    `;
+  }
+
+  calendarGrid.innerHTML = html;
+  renderCalendarDayDetail();
+}
 
 </script>
 </body>
