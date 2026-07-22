@@ -333,6 +333,12 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
 
 <div class="toolbar">
   <input class="search-input" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="Search by company, name or mobile number...">
+  <select id="unitFilter">
+    <option value="" data-i18n="unitFilterAll">All Units</option>
+    <option value="I" data-i18n="unitFilterI">Unit I</option>
+    <option value="II" data-i18n="unitFilterII">Unit II</option>
+    <option value="BOTH" data-i18n="unitFilterBoth">Unit I &amp; II (Both)</option>
+  </select>
   <button class="btn btn-ghost settings-btn" id="templateBtn" title="Reminder message template">✏️ <span data-i18n="messageTemplate">Message Template</span></button>
   <button class="btn btn-ghost settings-btn" id="bulkUploadBtn" data-i18n="bulkUpload">📤 Bulk Upload</button>
   <button class="btn btn-primary" id="addBtn" data-i18n="newCompany">+ New Company</button>
@@ -802,6 +808,10 @@ const translations = {
     selectUnitPh: 'Select Unit',
     unitI: 'Unit I',
     unitII: 'Unit II',
+    unitFilterAll: 'All Units',
+    unitFilterI: 'Unit I',
+    unitFilterII: 'Unit II',
+    unitFilterBoth: 'Unit I & II (Both)',
     invoiceDateLabel: 'Date',
     invoiceNoLabel: 'Invoice No.',
     invoiceNoPh: 'e.g. INV-1023',
@@ -971,6 +981,10 @@ const translations = {
     selectUnitPh: 'यूनिट चुनें',
     unitI: 'यूनिट I',
     unitII: 'यूनिट II',
+    unitFilterAll: 'सभी यूनिट',
+    unitFilterI: 'यूनिट I',
+    unitFilterII: 'यूनिट II',
+    unitFilterBoth: 'यूनिट I और II (दोनों)',
     invoiceDateLabel: 'तारीख',
     invoiceNoLabel: 'इनवॉइस नंबर',
     invoiceNoPh: 'जैसे INV-1023',
@@ -1419,6 +1433,7 @@ payForm.addEventListener('submit', async (e)=>{
 
 function render(){
   const search = document.getElementById('searchInput').value.toLowerCase();
+  const unitFilterVal = document.getElementById('unitFilter').value;
   let list = entries.map(e => ({...e, status: computeStatus(e)}));
   if(search){
     list = list.filter(e =>
@@ -1427,6 +1442,13 @@ function render(){
       (e.contactMobile||'').toLowerCase().includes(search) ||
       (e.salesPerson||'').toLowerCase().includes(search)
     );
+  }
+  if(unitFilterVal){
+    list = list.filter(e => {
+      const arr = unitArrayFrom(e.unit);
+      if(unitFilterVal === 'BOTH') return arr.includes('I') && arr.includes('II');
+      return arr.includes(unitFilterVal);
+    });
   }
   list.sort((a,b)=> (a.nextPaymentDate||'9999').localeCompare(b.nextPaymentDate||'9999'));
 
@@ -1670,6 +1692,7 @@ document.getElementById('invoicesCloseBtn').addEventListener('click', ()=> invoi
 invoicesModalBackdrop.addEventListener('click', (e)=>{ if(e.target === invoicesModalBackdrop) invoicesModalBackdrop.classList.remove('open'); });
 
 document.getElementById('searchInput').addEventListener('input', render);
+document.getElementById('unitFilter').addEventListener('change', render);
 
 /* ---------- Tabs ---------- */
 const paymentsView = document.getElementById('paymentsView');
