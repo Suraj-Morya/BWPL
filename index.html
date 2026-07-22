@@ -313,6 +313,7 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
   <button type="button" class="tab-btn active" id="tabPaymentsBtn" data-i18n="tabPayments">Payment Tracker</button>
   <button type="button" class="tab-btn" id="tabEnquiryBtn" data-i18n="tabActiveEnquiry">Active Enquiry</button>
   <button type="button" class="tab-btn" id="tabCalendarBtn" data-i18n="tabCalendar">Calendar</button>
+  <button type="button" class="tab-btn" id="tabSalesBtn" data-i18n="tabSalesPerson">Sales Person Report</button>
 </div>
 
 <div id="paymentsView">
@@ -343,6 +344,7 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
       <tr>
         <th data-i18n="thCompany">Company</th>
         <th data-i18n="thContactPerson">Contact Person</th>
+        <th data-i18n="thSalesPersonName">Sales Person</th>
         <th data-i18n="thMobile">Mobile</th>
         <th data-i18n="thTotalAmount">Total Amount</th>
         <th data-i18n="thPaid">Paid</th>
@@ -369,6 +371,7 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
         <div class="field full"><label data-i18n="companyNameLabel">Company Name *</label><input id="companyName"></div>
         <div class="field"><label data-i18n="contactPersonLabel">Contact Person Name</label><input id="contactName" data-i18n-placeholder="contactNamePh" placeholder="e.g. Rahul Sharma"></div>
         <div class="field"><label data-i18n="mobileLabel">Mobile Number</label><input id="contactMobile" type="tel" data-i18n-placeholder="mobilePh" placeholder="e.g. 9876543210"></div>
+        <div class="field"><label data-i18n="salesPersonLabel">Sales Person</label><input id="salesPerson" list="salesPersonList" data-i18n-placeholder="salesPersonPh" placeholder="e.g. Rajesh Kumar"><datalist id="salesPersonList"></datalist></div>
         <div class="field"><label data-i18n="totalAmountLabel">Total Amount (₹) *</label><input id="totalAmount" type="number" min="0" step="0.01"></div>
         <div class="field"><label data-i18n="paidSoFarLabel">Paid So Far (₹)</label><input id="paidAmount" type="number" min="0" step="0.01" value="0"></div>
         <div class="field"><label data-i18n="nextPaymentDateLabel">Next Payment Date</label><input id="nextPaymentDate" type="date"></div>
@@ -523,6 +526,59 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
   </div>
 </div>
 
+<div id="salesView" class="view-hidden">
+
+<div class="stats" style="grid-template-columns:repeat(2,1fr);">
+  <div class="stat-card copper glass"><div class="label" data-i18n="totalSalesPersons">Sales Persons</div><div class="value" id="statSalesPersonsCount">0</div></div>
+  <div class="stat-card danger glass"><div class="label" data-i18n="totalOutstandingAll">Total Outstanding (All)</div><div class="value" id="statSalesTotalOutstanding">₹0</div></div>
+</div>
+
+<div class="toolbar">
+  <select class="search-input" id="salesPersonFilter"></select>
+</div>
+
+<h3 class="display" style="font-size:16px; margin-bottom:12px; color:var(--violet-bright);" data-i18n="salesSummaryHeading">Sales Person Wise Outstanding Summary</h3>
+<div class="table-wrap glass" style="margin-bottom:26px;">
+  <table>
+    <thead>
+      <tr>
+        <th data-i18n="thSalesPersonName">Sales Person</th>
+        <th data-i18n="thNoOfCustomers">No. of Customers</th>
+        <th data-i18n="thTotalAmount">Total Amount</th>
+        <th data-i18n="thPaid">Paid</th>
+        <th data-i18n="thOutstanding">Outstanding</th>
+      </tr>
+    </thead>
+    <tbody id="salesSummaryTableBody"></tbody>
+  </table>
+  <div class="empty-state" id="salesSummaryEmptyState" style="display:none;">
+    <div class="display" data-i18n="noSalesDataYet">No data yet</div>
+    <div data-i18n="assignSalesPersonHint">Assign a Sales Person to companies in the Payment Tracker tab to see reports here.</div>
+  </div>
+</div>
+
+<h3 class="display" style="font-size:16px; margin-bottom:12px; color:var(--violet-bright);" data-i18n="debtorListHeading">Sales Person Wise Debtor List</h3>
+<div class="table-wrap glass">
+  <table>
+    <thead>
+      <tr>
+        <th data-i18n="thSalesPersonName">Sales Person</th>
+        <th data-i18n="thCompany">Company</th>
+        <th data-i18n="thContactPerson">Contact Person</th>
+        <th data-i18n="thMobile">Mobile</th>
+        <th data-i18n="thBalance">Balance</th>
+        <th data-i18n="thNextPayment">Next Payment</th>
+      </tr>
+    </thead>
+    <tbody id="salesDebtorTableBody"></tbody>
+  </table>
+  <div class="empty-state" id="salesDebtorEmptyState" style="display:none;">
+    <div class="display" data-i18n="noDebtorsYet">No outstanding debtors</div>
+  </div>
+</div>
+
+</div>
+
 <div class="toast" id="toast"></div>
 
 
@@ -632,7 +688,7 @@ const translations = {
     bulkUpload: '📤 Bulk Upload',
     bulkUploadTitleCompany: 'Bulk Upload Companies',
     bulkUploadTitleEnquiry: 'Bulk Upload Enquiries',
-    bulkUploadHelpCompany: 'Excel/CSV columns: Company Name*, Contact Person, Mobile, Total Amount*, Paid Amount, Next Payment Date, Note. (* required)',
+    bulkUploadHelpCompany: 'Excel/CSV columns: Company Name*, Contact Person, Sales Person, Mobile, Total Amount*, Paid Amount, Next Payment Date, Note. (* required)',
     bulkUploadHelpEnquiry: 'Excel/CSV columns: Name / Company*, Mobile, Date, Remarks. (* required)',
     downloadSample: '⬇️ Download Sample',
     chooseFile: '📁 Choose File',
@@ -651,7 +707,23 @@ const translations = {
     thHistoryBalance: 'Balance after',
     close: 'Close',
     weekdays: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
-    months: ['January','February','March','April','May','June','July','August','September','October','November','December']
+    months: ['January','February','March','April','May','June','July','August','September','October','November','December'],
+    tabSalesPerson: 'Sales Person Report',
+    salesPersonLabel: 'Sales Person',
+    salesPersonPh: 'e.g. Rajesh Kumar',
+    thSalesPersonName: 'Sales Person',
+    totalSalesPersons: 'Sales Persons',
+    totalOutstandingAll: 'Total Outstanding (All)',
+    salesPersonFilterAll: 'All Sales Persons',
+    unassignedSalesPerson: 'Unassigned',
+    salesSummaryHeading: 'Sales Person Wise Outstanding Summary',
+    thNoOfCustomers: 'No. of Customers',
+    thOutstanding: 'Outstanding',
+    noSalesDataYet: 'No data yet',
+    assignSalesPersonHint: 'Assign a Sales Person to companies in the Payment Tracker tab to see reports here.',
+    debtorListHeading: 'Sales Person Wise Debtor List',
+    noDebtorsYet: 'No outstanding debtors',
+    outstandingColonLabel: 'Outstanding:'
   },
   hi: {
     signIn: 'साइन इन करें',
@@ -757,7 +829,7 @@ const translations = {
     bulkUpload: '📤 बल्क अपलोड',
     bulkUploadTitleCompany: 'कंपनियां बल्क अपलोड करें',
     bulkUploadTitleEnquiry: 'एन्क्वायरी बल्क अपलोड करें',
-    bulkUploadHelpCompany: 'Excel/CSV कॉलम: Company Name*, Contact Person, Mobile, Total Amount*, Paid Amount, Next Payment Date, Note. (* आवश्यक)',
+    bulkUploadHelpCompany: 'Excel/CSV कॉलम: Company Name*, Contact Person, Sales Person, Mobile, Total Amount*, Paid Amount, Next Payment Date, Note. (* आवश्यक)',
     bulkUploadHelpEnquiry: 'Excel/CSV कॉलम: Name / Company*, Mobile, Date, Remarks. (* आवश्यक)',
     downloadSample: '⬇️ सैंपल डाउनलोड करें',
     chooseFile: '📁 फ़ाइल चुनें',
@@ -776,7 +848,23 @@ const translations = {
     thHistoryBalance: 'भुगतान के बाद शेष',
     close: 'बंद करें',
     weekdays: ['रवि','सोम','मंगल','बुध','गुरु','शुक्र','शनि'],
-    months: ['जनवरी','फ़रवरी','मार्च','अप्रैल','मई','जून','जुलाई','अगस्त','सितंबर','अक्टूबर','नवंबर','दिसंबर']
+    months: ['जनवरी','फ़रवरी','मार्च','अप्रैल','मई','जून','जुलाई','अगस्त','सितंबर','अक्टूबर','नवंबर','दिसंबर'],
+    tabSalesPerson: 'सेल्स पर्सन रिपोर्ट',
+    salesPersonLabel: 'सेल्स पर्सन',
+    salesPersonPh: 'जैसे राजेश कुमार',
+    thSalesPersonName: 'सेल्स पर्सन',
+    totalSalesPersons: 'कुल सेल्स पर्सन',
+    totalOutstandingAll: 'कुल बकाया (सभी)',
+    salesPersonFilterAll: 'सभी सेल्स पर्सन',
+    unassignedSalesPerson: 'असाइन नहीं किया गया',
+    salesSummaryHeading: 'सेल्स पर्सन वाइज़ बकाया सारांश',
+    thNoOfCustomers: 'ग्राहकों की संख्या',
+    thOutstanding: 'बकाया',
+    noSalesDataYet: 'अभी तक कोई डेटा नहीं',
+    assignSalesPersonHint: 'यहां रिपोर्ट देखने के लिए Payment Tracker टैब में कंपनियों को Sales Person असाइन करें।',
+    debtorListHeading: 'सेल्स पर्सन वाइज़ डेबटर लिस्ट',
+    noDebtorsYet: 'कोई बकाया डेबटर नहीं',
+    outstandingColonLabel: 'बकाया:'
   }
 };
 let currentLang = localStorage.getItem('bwpl-lang') || 'en';
@@ -800,6 +888,8 @@ function applyTranslations(){
   if(typeof render === 'function' && typeof entries !== 'undefined') render();
   if(typeof renderEnquiries === 'function' && typeof enquiries !== 'undefined') renderEnquiries();
   if(typeof renderCalendar === 'function' && typeof calendarViewDate !== 'undefined') renderCalendar();
+  const salesViewEl = document.getElementById('salesView');
+  if(typeof renderSalesReport === 'function' && typeof entries !== 'undefined' && salesViewEl && !salesViewEl.classList.contains('view-hidden')) renderSalesReport();
 }
 
 function setLang(lang){
@@ -1019,7 +1109,7 @@ function renderDueReminders(){
 }
 
 async function loadEntries(){
-  tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-secondary);">' + t('loading') + '</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--text-secondary);">' + t('loading') + '</td></tr>';
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     entries = raw ? JSON.parse(raw) : [];
@@ -1039,6 +1129,7 @@ function openModal(entry){
   document.getElementById('companyName').value = entry ? entry.companyName : '';
   document.getElementById('contactName').value = entry ? (entry.contactName || '') : '';
   document.getElementById('contactMobile').value = entry ? (entry.contactMobile || '') : '';
+  document.getElementById('salesPerson').value = entry ? (entry.salesPerson || '') : '';
   document.getElementById('totalAmount').value = entry ? entry.totalAmount : '';
   document.getElementById('paidAmount').value = entry ? entry.paidAmount : 0;
   document.getElementById('nextPaymentDate').value = entry ? entry.nextPaymentDate : '';
@@ -1118,6 +1209,7 @@ entryForm.addEventListener('submit', async (e)=>{
     companyName: companyName,
     contactName: document.getElementById('contactName').value.trim(),
     contactMobile: document.getElementById('contactMobile').value.trim(),
+    salesPerson: document.getElementById('salesPerson').value.trim(),
     totalAmount: newTotalAmount,
     paidAmount: newPaidAmount,
     nextPaymentDate: document.getElementById('nextPaymentDate').value,
@@ -1206,10 +1298,17 @@ function render(){
     list = list.filter(e =>
       (e.companyName||'').toLowerCase().includes(search) ||
       (e.contactName||'').toLowerCase().includes(search) ||
-      (e.contactMobile||'').toLowerCase().includes(search)
+      (e.contactMobile||'').toLowerCase().includes(search) ||
+      (e.salesPerson||'').toLowerCase().includes(search)
     );
   }
   list.sort((a,b)=> (a.nextPaymentDate||'9999').localeCompare(b.nextPaymentDate||'9999'));
+
+  const salesPersonListEl = document.getElementById('salesPersonList');
+  if(salesPersonListEl){
+    const spNames = Array.from(new Set(entries.map(e => (e.salesPerson||'').trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+    salesPersonListEl.innerHTML = spNames.map(n => `<option value="${escapeHtml(n)}"></option>`).join('');
+  }
 
   const totalAmount = entries.reduce((s,e)=> s + Number(e.totalAmount), 0);
   const totalPaid = entries.reduce((s,e)=> s + Number(e.paidAmount), 0);
@@ -1244,6 +1343,7 @@ function render(){
       <tr class="${rowClass}">
         <td><div class="cust-name">${escapeHtml(e.companyName)}</div></td>
         <td>${e.contactName ? escapeHtml(e.contactName) : '<span style="color:var(--text-secondary)">—</span>'}</td>
+        <td>${e.salesPerson ? escapeHtml(e.salesPerson) : '<span style="color:var(--text-secondary)">—</span>'}</td>
         <td class="mono">${e.contactMobile ? escapeHtml(e.contactMobile) : '<span style="color:var(--text-secondary)">—</span>'}</td>
         <td class="mono">${fmtMoney(e.totalAmount)}</td>
         <td>${paidCellHtml}</td>
@@ -1312,14 +1412,17 @@ document.getElementById('searchInput').addEventListener('input', render);
 const paymentsView = document.getElementById('paymentsView');
 const enquiryView = document.getElementById('enquiryView');
 const calendarView = document.getElementById('calendarView');
+const salesView = document.getElementById('salesView');
 const tabPaymentsBtn = document.getElementById('tabPaymentsBtn');
 const tabEnquiryBtn = document.getElementById('tabEnquiryBtn');
 const tabCalendarBtn = document.getElementById('tabCalendarBtn');
+const tabSalesBtn = document.getElementById('tabSalesBtn');
 
 const allTabs = [
   { btn: tabPaymentsBtn, view: paymentsView, onShow: null },
   { btn: tabEnquiryBtn, view: enquiryView, onShow: () => renderEnquiries() },
-  { btn: tabCalendarBtn, view: calendarView, onShow: () => renderCalendar() }
+  { btn: tabCalendarBtn, view: calendarView, onShow: () => renderCalendar() },
+  { btn: tabSalesBtn, view: salesView, onShow: () => renderSalesReport() }
 ];
 
 function switchTab(activeEntry){
@@ -1504,7 +1607,7 @@ document.getElementById('bulkDownloadSampleBtn').addEventListener('click', ()=>{
   }
   let data, filename;
   if(bulkUploadType === 'company'){
-    data = [{ 'Company Name':'ABC Traders', 'Contact Person':'Rahul Sharma', 'Mobile':'9876543210', 'Total Amount':50000, 'Paid Amount':10000, 'Next Payment Date':'2026-08-15', 'Note':'Next week' }];
+    data = [{ 'Company Name':'ABC Traders', 'Contact Person':'Rahul Sharma', 'Sales Person':'Vikas Gupta', 'Mobile':'9876543210', 'Total Amount':50000, 'Paid Amount':10000, 'Next Payment Date':'2026-08-15', 'Note':'Next week' }];
     filename = 'company_bulk_upload_sample.xlsx';
   }else{
     data = [{ 'Name / Company':'XYZ Enterprises', 'Mobile':'9876543210', 'Date':'2026-07-18', 'Remarks':'Interested in bulk order' }];
@@ -1529,6 +1632,7 @@ function importCompanyRows(rows){
       id: 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
       companyName,
       contactName: String(getField(row, ['Contact Person','Contact Name','Person','Contact'])).trim(),
+      salesPerson: String(getField(row, ['Sales Person','Salesperson','Sales Executive','Sales Rep','Executive','Agent'])).trim(),
       contactMobile,
       totalAmount,
       paidAmount,
@@ -1710,6 +1814,120 @@ function renderCalendar(){
 
   calendarGrid.innerHTML = html;
   renderCalendarDayDetail();
+}
+
+/* ---------- Sales Person Report ---------- */
+const UNASSIGNED_SP = '__unassigned__';
+const salesPersonFilter = document.getElementById('salesPersonFilter');
+salesPersonFilter.addEventListener('change', renderSalesReport);
+
+function groupEntriesBySalesPerson(){
+  const groups = {};
+  entries.forEach(e => {
+    const sp = (e.salesPerson || '').trim() || UNASSIGNED_SP;
+    if(!groups[sp]) groups[sp] = [];
+    groups[sp].push(e);
+  });
+  return groups;
+}
+
+function sortedSalesPersonNames(groups){
+  return Object.keys(groups).sort((a, b) => {
+    if(a === UNASSIGNED_SP) return 1;
+    if(b === UNASSIGNED_SP) return -1;
+    return a.localeCompare(b);
+  });
+}
+
+function populateSalesPersonFilterOptions(groups){
+  const current = salesPersonFilter.value;
+  const names = sortedSalesPersonNames(groups);
+  salesPersonFilter.innerHTML = `<option value="">${t('salesPersonFilterAll')}</option>` +
+    names.map(n => `<option value="${escapeHtml(n)}">${n === UNASSIGNED_SP ? t('unassignedSalesPerson') : escapeHtml(n)}</option>`).join('');
+  if(names.includes(current)) salesPersonFilter.value = current;
+}
+
+function renderSalesReport(){
+  const groups = groupEntriesBySalesPerson();
+  populateSalesPersonFilterOptions(groups);
+  const filterVal = salesPersonFilter.value;
+  let spNames = sortedSalesPersonNames(groups);
+  if(filterVal) spNames = spNames.filter(n => n === filterVal);
+
+  const namedCount = Object.keys(groups).filter(n => n !== UNASSIGNED_SP).length;
+  document.getElementById('statSalesPersonsCount').textContent = namedCount;
+  const totalOutstandingAll = entries.reduce((s, e) => s + (Number(e.totalAmount) - Number(e.paidAmount)), 0);
+  document.getElementById('statSalesTotalOutstanding').textContent = fmtMoney(totalOutstandingAll);
+
+  /* Outstanding summary table */
+  const summaryBody = document.getElementById('salesSummaryTableBody');
+  const summaryEmpty = document.getElementById('salesSummaryEmptyState');
+  if(spNames.length === 0){
+    summaryBody.innerHTML = '';
+    summaryEmpty.style.display = 'block';
+  }else{
+    summaryEmpty.style.display = 'none';
+    summaryBody.innerHTML = spNames.map(sp => {
+      const list = groups[sp];
+      const total = list.reduce((s, e) => s + Number(e.totalAmount), 0);
+      const paid = list.reduce((s, e) => s + Number(e.paidAmount), 0);
+      const outstanding = total - paid;
+      const label = sp === UNASSIGNED_SP ? t('unassignedSalesPerson') : escapeHtml(sp);
+      return `
+        <tr>
+          <td><div class="cust-name">${label}</div></td>
+          <td class="mono">${list.length}</td>
+          <td class="mono">${fmtMoney(total)}</td>
+          <td class="mono">${fmtMoney(paid)}</td>
+          <td class="mono" style="color:var(--danger); font-weight:600;">${fmtMoney(outstanding)}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  /* Debtor list grouped by sales person */
+  const debtorBody = document.getElementById('salesDebtorTableBody');
+  const debtorEmpty = document.getElementById('salesDebtorEmptyState');
+  let rowsHtml = '';
+  let anyDebtor = false;
+  spNames.forEach(sp => {
+    const debtors = groups[sp]
+      .map(e => ({...e, balance: Number(e.totalAmount) - Number(e.paidAmount)}))
+      .filter(e => e.balance > 0)
+      .sort((a, b) => (a.nextPaymentDate || '9999').localeCompare(b.nextPaymentDate || '9999'));
+    if(debtors.length === 0) return;
+    anyDebtor = true;
+    const label = sp === UNASSIGNED_SP ? t('unassignedSalesPerson') : escapeHtml(sp);
+    const groupTotal = debtors.reduce((s, e) => s + e.balance, 0);
+    rowsHtml += `
+      <tr style="background:rgba(139,92,246,0.10);">
+        <td colspan="6" style="font-weight:700; color:var(--violet-bright);">${label} — ${t('outstandingColonLabel')} ${fmtMoney(groupTotal)} (${debtors.length})</td>
+      </tr>
+    `;
+    rowsHtml += debtors.map(e => {
+      let nextPayHtml = '<span style="color:var(--text-secondary)">—</span>';
+      if(e.nextPaymentDate || e.nextPaymentNote){
+        nextPayHtml = `<div class="next-pay">${e.nextPaymentDate ? `<div class="date">${e.nextPaymentDate}</div>` : ''}${e.nextPaymentNote ? `<div class="note">${escapeHtml(e.nextPaymentNote)}</div>` : ''}</div>`;
+      }
+      return `
+        <tr>
+          <td></td>
+          <td><div class="cust-name">${escapeHtml(e.companyName)}</div></td>
+          <td>${e.contactName ? escapeHtml(e.contactName) : '<span style="color:var(--text-secondary)">—</span>'}</td>
+          <td class="mono">${e.contactMobile ? escapeHtml(e.contactMobile) : '<span style="color:var(--text-secondary)">—</span>'}</td>
+          <td class="mono" style="color:var(--danger); font-weight:600;">${fmtMoney(e.balance)}</td>
+          <td>${nextPayHtml}</td>
+        </tr>
+      `;
+    }).join('');
+  });
+  if(!anyDebtor){
+    debtorBody.innerHTML = '';
+    debtorEmpty.style.display = 'block';
+  }else{
+    debtorEmpty.style.display = 'none';
+    debtorBody.innerHTML = rowsHtml;
+  }
 }
 
 </script>
