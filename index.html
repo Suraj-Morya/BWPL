@@ -314,6 +314,7 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
   <button type="button" class="tab-btn" id="tabEnquiryBtn" data-i18n="tabActiveEnquiry">Active Enquiry</button>
   <button type="button" class="tab-btn" id="tabCalendarBtn" data-i18n="tabCalendar">Calendar</button>
   <button type="button" class="tab-btn" id="tabSalesBtn" data-i18n="tabSalesPerson">Sales Person Report</button>
+  <button type="button" class="tab-btn" id="tabOverdueBtn" data-i18n="tabOverdue">Payment Overdue</button>
 </div>
 
 <div id="paymentsView">
@@ -647,6 +648,41 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
 
 </div>
 
+<div id="overdueView" class="view-hidden">
+
+<div class="toolbar">
+  <input class="search-input" id="overdueSearchInput" data-i18n-placeholder="overdueSearchPlaceholder" placeholder="Search by company, sales person or invoice no...">
+  <select id="overdueUnitFilter">
+    <option value="" data-i18n="unitFilterAll">All Units</option>
+    <option value="I" data-i18n="unitFilterI">Unit I</option>
+    <option value="II" data-i18n="unitFilterII">Unit II</option>
+    <option value="BOTH" data-i18n="unitFilterBoth">Unit I &amp; II (Both)</option>
+  </select>
+</div>
+
+<div class="table-wrap glass">
+  <table>
+    <thead>
+      <tr>
+        <th data-i18n="thCompany">Company</th>
+        <th data-i18n="thUnit">Unit</th>
+        <th data-i18n="thSalesPersonName">Sales Person</th>
+        <th data-i18n="thInvoiceDate">Date</th>
+        <th data-i18n="thInvoiceNo">Invoice No.</th>
+        <th data-i18n="thCdDueDate">CD Due Date</th>
+        <th data-i18n="thSumAmount">Sum Amount</th>
+        <th data-i18n="thInvoiceTotal">Total</th>
+      </tr>
+    </thead>
+    <tbody id="overdueTableBody"></tbody>
+  </table>
+  <div class="empty-state" id="overdueEmptyState" style="display:none;">
+    <div class="display" data-i18n="noInvoicesYet">No invoices added yet.</div>
+  </div>
+</div>
+
+</div>
+
 <div class="toast" id="toast"></div>
 
 
@@ -777,6 +813,8 @@ const translations = {
     weekdays: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
     months: ['January','February','March','April','May','June','July','August','September','October','November','December'],
     tabSalesPerson: 'Sales Person Report',
+    tabOverdue: 'Payment Overdue',
+    overdueSearchPlaceholder: 'Search by company, sales person or invoice no...',
     salesPersonLabel: 'Sales Person',
     salesPersonPh: 'e.g. Rajesh Kumar',
     thSalesPersonName: 'Sales Person',
@@ -950,6 +988,8 @@ const translations = {
     weekdays: ['रवि','सोम','मंगल','बुध','गुरु','शुक्र','शनि'],
     months: ['जनवरी','फ़रवरी','मार्च','अप्रैल','मई','जून','जुलाई','अगस्त','सितंबर','अक्टूबर','नवंबर','दिसंबर'],
     tabSalesPerson: 'सेल्स पर्सन रिपोर्ट',
+    tabOverdue: 'पेमेंट ओवरड्यू',
+    overdueSearchPlaceholder: 'कंपनी, सेल्स पर्सन या इनवॉइस नंबर से खोजें...',
     salesPersonLabel: 'सेल्स पर्सन',
     salesPersonPh: 'जैसे राजेश कुमार',
     thSalesPersonName: 'सेल्स पर्सन',
@@ -1022,6 +1062,8 @@ function applyTranslations(){
   if(typeof renderCalendar === 'function' && typeof calendarViewDate !== 'undefined') renderCalendar();
   const salesViewEl = document.getElementById('salesView');
   if(typeof renderSalesReport === 'function' && typeof entries !== 'undefined' && salesViewEl && !salesViewEl.classList.contains('view-hidden')) renderSalesReport();
+  const overdueViewEl = document.getElementById('overdueView');
+  if(typeof renderOverdueReport === 'function' && typeof entries !== 'undefined' && overdueViewEl && !overdueViewEl.classList.contains('view-hidden')) renderOverdueReport();
 }
 
 function setLang(lang){
@@ -1699,16 +1741,19 @@ const paymentsView = document.getElementById('paymentsView');
 const enquiryView = document.getElementById('enquiryView');
 const calendarView = document.getElementById('calendarView');
 const salesView = document.getElementById('salesView');
+const overdueView = document.getElementById('overdueView');
 const tabPaymentsBtn = document.getElementById('tabPaymentsBtn');
 const tabEnquiryBtn = document.getElementById('tabEnquiryBtn');
 const tabCalendarBtn = document.getElementById('tabCalendarBtn');
 const tabSalesBtn = document.getElementById('tabSalesBtn');
+const tabOverdueBtn = document.getElementById('tabOverdueBtn');
 
 const allTabs = [
   { btn: tabPaymentsBtn, view: paymentsView, onShow: null },
   { btn: tabEnquiryBtn, view: enquiryView, onShow: () => renderEnquiries() },
   { btn: tabCalendarBtn, view: calendarView, onShow: () => renderCalendar() },
-  { btn: tabSalesBtn, view: salesView, onShow: () => renderSalesReport() }
+  { btn: tabSalesBtn, view: salesView, onShow: () => renderSalesReport() },
+  { btn: tabOverdueBtn, view: overdueView, onShow: () => renderOverdueReport() }
 ];
 
 function switchTab(activeEntry){
@@ -2215,6 +2260,64 @@ function renderSalesReport(){
     debtorBody.innerHTML = rowsHtml;
   }
 }
+
+/* ---------- Payment Overdue (Invoices Report) ---------- */
+function renderOverdueReport(){
+  const search = document.getElementById('overdueSearchInput').value.toLowerCase();
+  const unitFilterVal = document.getElementById('overdueUnitFilter').value;
+  const today = todayStr();
+
+  let rows = [];
+  entries.forEach(en => {
+    const invoices = Array.isArray(en.invoices) ? en.invoices : [];
+    invoices.forEach(inv => {
+      rows.push({...inv, companyName: en.companyName});
+    });
+  });
+
+  if(search){
+    rows = rows.filter(r =>
+      (r.companyName||'').toLowerCase().includes(search) ||
+      (r.salesPerson||'').toLowerCase().includes(search) ||
+      (r.invoiceNo||'').toLowerCase().includes(search)
+    );
+  }
+  if(unitFilterVal){
+    rows = rows.filter(r => {
+      const arr = unitArrayFrom(r.unit);
+      if(unitFilterVal === 'BOTH') return arr.includes('I') && arr.includes('II');
+      return arr.includes(unitFilterVal);
+    });
+  }
+  rows.sort((a,b) => (a.cdDueDate||'9999').localeCompare(b.cdDueDate||'9999'));
+
+  const overdueTableBody = document.getElementById('overdueTableBody');
+  const overdueEmptyState = document.getElementById('overdueEmptyState');
+  if(rows.length === 0){
+    overdueTableBody.innerHTML = '';
+    overdueEmptyState.style.display = 'block';
+    return;
+  }
+  overdueEmptyState.style.display = 'none';
+  overdueTableBody.innerHTML = rows.map(r => {
+    const isOverdue = r.cdDueDate && r.cdDueDate < today;
+    return `
+      <tr class="${isOverdue ? 'overdue' : ''}">
+        <td><div class="cust-name">${escapeHtml(r.companyName)}</div></td>
+        <td>${unitLabelFor(r.unit)}</td>
+        <td>${r.salesPerson ? escapeHtml(r.salesPerson) : '<span style="color:var(--text-secondary)">—</span>'}</td>
+        <td>${r.date ? escapeHtml(r.date) : '<span style="color:var(--text-secondary)">—</span>'}</td>
+        <td>${r.invoiceNo ? escapeHtml(r.invoiceNo) : '<span style="color:var(--text-secondary)">—</span>'}</td>
+        <td>${r.cdDueDate ? escapeHtml(r.cdDueDate) : '<span style="color:var(--text-secondary)">—</span>'}</td>
+        <td class="mono">${fmtMoney(r.sumAmount)}</td>
+        <td class="mono">${fmtMoney(r.total)}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+document.getElementById('overdueSearchInput').addEventListener('input', renderOverdueReport);
+document.getElementById('overdueUnitFilter').addEventListener('change', renderOverdueReport);
 
 </script>
 </body>
