@@ -502,11 +502,14 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
       <input type="hidden" id="invoiceEntryId">
       <div class="form-grid">
         <div class="field"><label data-i18n="unitLabel">Unit *</label>
-          <select id="invoiceUnit">
-            <option value="" data-i18n="selectUnitPh">Select Unit</option>
-            <option value="I" data-i18n="unitI">Unit I</option>
-            <option value="II" data-i18n="unitII">Unit II</option>
-          </select>
+          <div style="display:flex; gap:18px; align-items:center; height:40px;">
+            <label style="display:flex; align-items:center; gap:6px; font-weight:500; text-transform:none; letter-spacing:normal; font-size:13.5px; color:var(--text-primary);">
+              <input type="checkbox" id="invoiceUnitI" style="width:16px; height:16px; accent-color:var(--violet);"> <span data-i18n="unitI">Unit I</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; font-weight:500; text-transform:none; letter-spacing:normal; font-size:13.5px; color:var(--text-primary);">
+              <input type="checkbox" id="invoiceUnitII" style="width:16px; height:16px; accent-color:var(--violet);"> <span data-i18n="unitII">Unit II</span>
+            </label>
+          </div>
         </div>
         <div class="field"><label data-i18n="salesPersonLabel">Sales Person</label><input id="invoiceSalesPerson" list="invoiceSalesPersonList" data-i18n-placeholder="salesPersonPh" placeholder="e.g. Rajesh Kumar"><datalist id="invoiceSalesPersonList"></datalist></div>
         <div class="field"><label data-i18n="invoiceDateLabel">Date</label><input id="invoiceDate" type="date"></div>
@@ -1528,10 +1531,16 @@ const invoiceFormModalBackdrop = document.getElementById('invoiceFormModalBackdr
 const invoiceForm = document.getElementById('invoiceForm');
 let currentInvoicesEntryId = null;
 
+function unitArrayFrom(unit){
+  if(Array.isArray(unit)) return unit.filter(u => u === 'I' || u === 'II');
+  if(unit === 'I' || unit === 'II') return [unit];
+  return [];
+}
+
 function unitLabelFor(unit){
-  if(unit === 'I') return t('unitI');
-  if(unit === 'II') return t('unitII');
-  return '<span style="color:var(--text-secondary)">—</span>';
+  const arr = unitArrayFrom(unit);
+  if(arr.length === 0) return '<span style="color:var(--text-secondary)">—</span>';
+  return arr.map(u => u === 'I' ? t('unitI') : t('unitII')).join(', ');
 }
 
 window.openInvoicesModal = function(id){
@@ -1575,7 +1584,9 @@ function openInvoiceForm(invoice){
   document.getElementById('invoiceFormModalTitle').textContent = invoice ? t('editInvoiceTitle') : t('newInvoiceTitle');
   document.getElementById('invoiceId').value = invoice ? invoice.id : '';
   document.getElementById('invoiceEntryId').value = currentInvoicesEntryId || '';
-  document.getElementById('invoiceUnit').value = invoice ? (invoice.unit || '') : '';
+  const invoiceUnitArr = invoice ? unitArrayFrom(invoice.unit) : [];
+  document.getElementById('invoiceUnitI').checked = invoiceUnitArr.includes('I');
+  document.getElementById('invoiceUnitII').checked = invoiceUnitArr.includes('II');
   document.getElementById('invoiceSalesPerson').value = invoice ? (invoice.salesPerson || '') : '';
   document.getElementById('invoiceDate').value = invoice ? (invoice.date || '') : '';
   document.getElementById('invoiceNo').value = invoice ? (invoice.invoiceNo || '') : '';
@@ -1618,11 +1629,13 @@ invoiceFormModalBackdrop.addEventListener('click', (e)=>{ if(e.target === invoic
 invoiceForm.addEventListener('submit', async (e)=>{
   e.preventDefault();
   const entryId = document.getElementById('invoiceEntryId').value;
-  const unit = document.getElementById('invoiceUnit').value;
+  const unitArr = [];
+  if(document.getElementById('invoiceUnitI').checked) unitArr.push('I');
+  if(document.getElementById('invoiceUnitII').checked) unitArr.push('II');
   const totalRaw = document.getElementById('invoiceTotal').value;
-  if(!unit){
+  if(unitArr.length === 0){
     showToast(t('validUnit'), true);
-    document.getElementById('invoiceUnit').focus();
+    document.getElementById('invoiceUnitI').focus();
     return;
   }
   if(totalRaw === '' || isNaN(parseFloat(totalRaw))){
@@ -1634,7 +1647,7 @@ invoiceForm.addEventListener('submit', async (e)=>{
   const sumAmountRaw = document.getElementById('invoiceSumAmount').value;
   const invoiceData = {
     id: invoiceId || 'inv_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
-    unit: unit,
+    unit: unitArr,
     salesPerson: document.getElementById('invoiceSalesPerson').value.trim(),
     date: document.getElementById('invoiceDate').value,
     invoiceNo: document.getElementById('invoiceNo').value.trim(),
