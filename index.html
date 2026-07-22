@@ -351,6 +351,7 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
         <th data-i18n="thBalance">Balance</th>
         <th data-i18n="thStatus">Status</th>
         <th data-i18n="thNextPayment">Next Payment</th>
+        <th data-i18n="thInvoices">Invoices</th>
         <th></th>
       </tr>
     </thead>
@@ -461,6 +462,64 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
     <div class="modal-actions">
       <button type="button" class="btn btn-primary" id="historyCloseBtn" data-i18n="close">Close</button>
     </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="invoicesModalBackdrop">
+  <div class="modal glass" style="max-width:920px;">
+    <h3 id="invoicesModalTitle">Invoices</h3>
+    <div class="toolbar" style="margin-bottom:14px;">
+      <button type="button" class="btn btn-primary" id="addInvoiceBtn" data-i18n="addInvoice">+ Add Invoice</button>
+    </div>
+    <div class="table-wrap glass" style="box-shadow:none; max-height:400px; overflow-y:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th data-i18n="thUnit">Unit</th>
+            <th data-i18n="thSalesPersonName">Sales Person</th>
+            <th data-i18n="thInvoiceDate">Date</th>
+            <th data-i18n="thInvoiceNo">Invoice No.</th>
+            <th data-i18n="thCdDueDate">CD Due Date</th>
+            <th data-i18n="thSumAmount">Sum Amount</th>
+            <th data-i18n="thInvoiceTotal">Total</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="invoicesTableBody"></tbody>
+      </table>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-primary" id="invoicesCloseBtn" data-i18n="close">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="invoiceFormModalBackdrop">
+  <div class="modal glass">
+    <h3 id="invoiceFormModalTitle" data-i18n="newInvoiceTitle">New Invoice</h3>
+    <form id="invoiceForm">
+      <input type="hidden" id="invoiceId">
+      <input type="hidden" id="invoiceEntryId">
+      <div class="form-grid">
+        <div class="field"><label data-i18n="unitLabel">Unit *</label>
+          <select id="invoiceUnit">
+            <option value="" data-i18n="selectUnitPh">Select Unit</option>
+            <option value="I" data-i18n="unitI">Unit I</option>
+            <option value="II" data-i18n="unitII">Unit II</option>
+          </select>
+        </div>
+        <div class="field"><label data-i18n="salesPersonLabel">Sales Person</label><input id="invoiceSalesPerson" list="invoiceSalesPersonList" data-i18n-placeholder="salesPersonPh" placeholder="e.g. Rajesh Kumar"><datalist id="invoiceSalesPersonList"></datalist></div>
+        <div class="field"><label data-i18n="invoiceDateLabel">Date</label><input id="invoiceDate" type="date"></div>
+        <div class="field"><label data-i18n="invoiceNoLabel">Invoice No.</label><input id="invoiceNo" data-i18n-placeholder="invoiceNoPh" placeholder="e.g. INV-1023"></div>
+        <div class="field"><label data-i18n="cdDueDateLabel">CD Due Date</label><input id="invoiceCdDueDate" type="date"></div>
+        <div class="field"><label data-i18n="sumAmountLabel">Sum Amount (₹)</label><input id="invoiceSumAmount" type="number" min="0" step="0.01"></div>
+        <div class="field"><label data-i18n="invoiceTotalLabel">Total (₹) *</label><input id="invoiceTotal" type="number" min="0" step="0.01"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="invoiceFormCancelBtn" data-i18n="cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary" data-i18n="save">Save</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -723,7 +782,35 @@ const translations = {
     assignSalesPersonHint: 'Assign a Sales Person to companies in the Payment Tracker tab to see reports here.',
     debtorListHeading: 'Sales Person Wise Debtor List',
     noDebtorsYet: 'No outstanding debtors',
-    outstandingColonLabel: 'Outstanding:'
+    outstandingColonLabel: 'Outstanding:',
+    thInvoices: 'Invoices',
+    invoicesBtn: 'Invoices',
+    invoicesFor: 'Invoices — {company}',
+    addInvoice: '+ Add Invoice',
+    newInvoiceTitle: 'New Invoice',
+    editInvoiceTitle: 'Edit Invoice',
+    thUnit: 'Unit',
+    thInvoiceDate: 'Date',
+    thInvoiceNo: 'Invoice No.',
+    thCdDueDate: 'CD Due Date',
+    thSumAmount: 'Sum Amount',
+    thInvoiceTotal: 'Total',
+    unitLabel: 'Unit *',
+    selectUnitPh: 'Select Unit',
+    unitI: 'Unit I',
+    unitII: 'Unit II',
+    invoiceDateLabel: 'Date',
+    invoiceNoLabel: 'Invoice No.',
+    invoiceNoPh: 'e.g. INV-1023',
+    cdDueDateLabel: 'CD Due Date',
+    sumAmountLabel: 'Sum Amount (₹)',
+    invoiceTotalLabel: 'Total (₹) *',
+    noInvoicesYet: 'No invoices added yet.',
+    validUnit: 'Please select a Unit',
+    validInvoiceTotal: 'Please enter a valid Total',
+    invoiceSaved: 'Invoice saved successfully ✓',
+    invoiceDeleted: 'Invoice deleted successfully',
+    confirmDeleteInvoice: 'Delete this invoice? This action cannot be undone.'
   },
   hi: {
     signIn: 'साइन इन करें',
@@ -864,7 +951,35 @@ const translations = {
     assignSalesPersonHint: 'यहां रिपोर्ट देखने के लिए Payment Tracker टैब में कंपनियों को Sales Person असाइन करें।',
     debtorListHeading: 'सेल्स पर्सन वाइज़ डेबटर लिस्ट',
     noDebtorsYet: 'कोई बकाया डेबटर नहीं',
-    outstandingColonLabel: 'बकाया:'
+    outstandingColonLabel: 'बकाया:',
+    thInvoices: 'इनवॉइस',
+    invoicesBtn: 'इनवॉइस',
+    invoicesFor: 'इनवॉइस — {company}',
+    addInvoice: '+ इनवॉइस जोड़ें',
+    newInvoiceTitle: 'नया इनवॉइस',
+    editInvoiceTitle: 'इनवॉइस संपादित करें',
+    thUnit: 'यूनिट',
+    thInvoiceDate: 'तारीख',
+    thInvoiceNo: 'इनवॉइस नंबर',
+    thCdDueDate: 'CD ड्यू डेट',
+    thSumAmount: 'सम राशि',
+    thInvoiceTotal: 'कुल',
+    unitLabel: 'यूनिट *',
+    selectUnitPh: 'यूनिट चुनें',
+    unitI: 'यूनिट I',
+    unitII: 'यूनिट II',
+    invoiceDateLabel: 'तारीख',
+    invoiceNoLabel: 'इनवॉइस नंबर',
+    invoiceNoPh: 'जैसे INV-1023',
+    cdDueDateLabel: 'CD ड्यू डेट',
+    sumAmountLabel: 'सम राशि (₹)',
+    invoiceTotalLabel: 'कुल (₹) *',
+    noInvoicesYet: 'अभी तक कोई इनवॉइस नहीं जोड़ा गया।',
+    validUnit: 'कृपया एक यूनिट चुनें',
+    validInvoiceTotal: 'कृपया एक मान्य कुल राशि दर्ज करें',
+    invoiceSaved: 'इनवॉइस सफलतापूर्वक सेव हो गया ✓',
+    invoiceDeleted: 'इनवॉइस सफलतापूर्वक हटा दिया गया',
+    confirmDeleteInvoice: 'इस इनवॉइस को हटाएं? यह क्रिया वापस नहीं ली जा सकती।'
   }
 };
 let currentLang = localStorage.getItem('bwpl-lang') || 'en';
@@ -1109,7 +1224,7 @@ function renderDueReminders(){
 }
 
 async function loadEntries(){
-  tableBody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--text-secondary);">' + t('loading') + '</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--text-secondary);">' + t('loading') + '</td></tr>';
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     entries = raw ? JSON.parse(raw) : [];
@@ -1350,6 +1465,7 @@ function render(){
         <td class="mono">${fmtMoney(balance)}</td>
         <td><span class="badge ${e.status}">${statusLabel}</span></td>
         <td>${nextPayHtml}</td>
+        <td><button class="btn btn-ghost btn-icon" onclick="openInvoicesModal('${e.id}')">🧾 ${t('invoicesBtn')}${Array.isArray(e.invoices) && e.invoices.length ? ' (' + e.invoices.length + ')' : ''}</button></td>
         <td>
           <div class="row-actions">
             ${balance > 0 ? `<button class="btn btn-pay btn-icon" onclick="openPayModal('${e.id}')">+ ${t('paymentBtn')}</button>` : ''}
@@ -1405,6 +1521,144 @@ window.openHistoryModal = function(id){
 };
 document.getElementById('historyCloseBtn').addEventListener('click', ()=> historyModalBackdrop.classList.remove('open'));
 historyModalBackdrop.addEventListener('click', (e)=>{ if(e.target === historyModalBackdrop) historyModalBackdrop.classList.remove('open'); });
+
+/* ---------- Invoices (Unit I / Unit II) ---------- */
+const invoicesModalBackdrop = document.getElementById('invoicesModalBackdrop');
+const invoiceFormModalBackdrop = document.getElementById('invoiceFormModalBackdrop');
+const invoiceForm = document.getElementById('invoiceForm');
+let currentInvoicesEntryId = null;
+
+function unitLabelFor(unit){
+  if(unit === 'I') return t('unitI');
+  if(unit === 'II') return t('unitII');
+  return '<span style="color:var(--text-secondary)">—</span>';
+}
+
+window.openInvoicesModal = function(id){
+  const entry = entries.find(e => e.id === id);
+  if(!entry) return;
+  currentInvoicesEntryId = id;
+  document.getElementById('invoicesModalTitle').textContent = t('invoicesFor').replace('{company}', entry.companyName);
+  renderInvoicesTable();
+  invoicesModalBackdrop.classList.add('open');
+};
+
+function renderInvoicesTable(){
+  const entry = entries.find(e => e.id === currentInvoicesEntryId);
+  const invoicesTableBody = document.getElementById('invoicesTableBody');
+  if(!entry){ invoicesTableBody.innerHTML = ''; return; }
+  const list = (Array.isArray(entry.invoices) ? entry.invoices.slice() : []).sort((a,b)=> (a.date||'').localeCompare(b.date||''));
+  if(list.length === 0){
+    invoicesTableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:22px; color:var(--text-secondary);">${t('noInvoicesYet')}</td></tr>`;
+    return;
+  }
+  invoicesTableBody.innerHTML = list.map(inv => `
+    <tr>
+      <td>${unitLabelFor(inv.unit)}</td>
+      <td>${inv.salesPerson ? escapeHtml(inv.salesPerson) : '<span style="color:var(--text-secondary)">—</span>'}</td>
+      <td>${inv.date ? escapeHtml(inv.date) : '<span style="color:var(--text-secondary)">—</span>'}</td>
+      <td>${inv.invoiceNo ? escapeHtml(inv.invoiceNo) : '<span style="color:var(--text-secondary)">—</span>'}</td>
+      <td>${inv.cdDueDate ? escapeHtml(inv.cdDueDate) : '<span style="color:var(--text-secondary)">—</span>'}</td>
+      <td class="mono">${fmtMoney(inv.sumAmount)}</td>
+      <td class="mono">${fmtMoney(inv.total)}</td>
+      <td>
+        <div class="row-actions">
+          <button class="btn btn-ghost btn-icon" onclick="editInvoice('${inv.id}')">${t('edit')}</button>
+          <button class="btn btn-ghost btn-icon" onclick="deleteInvoice('${inv.id}')">${t('delete')}</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openInvoiceForm(invoice){
+  document.getElementById('invoiceFormModalTitle').textContent = invoice ? t('editInvoiceTitle') : t('newInvoiceTitle');
+  document.getElementById('invoiceId').value = invoice ? invoice.id : '';
+  document.getElementById('invoiceEntryId').value = currentInvoicesEntryId || '';
+  document.getElementById('invoiceUnit').value = invoice ? (invoice.unit || '') : '';
+  document.getElementById('invoiceSalesPerson').value = invoice ? (invoice.salesPerson || '') : '';
+  document.getElementById('invoiceDate').value = invoice ? (invoice.date || '') : '';
+  document.getElementById('invoiceNo').value = invoice ? (invoice.invoiceNo || '') : '';
+  document.getElementById('invoiceCdDueDate').value = invoice ? (invoice.cdDueDate || '') : '';
+  document.getElementById('invoiceSumAmount').value = invoice ? (invoice.sumAmount != null ? invoice.sumAmount : '') : '';
+  document.getElementById('invoiceTotal').value = invoice ? (invoice.total != null ? invoice.total : '') : '';
+  const invoiceSalesPersonListEl = document.getElementById('invoiceSalesPersonList');
+  if(invoiceSalesPersonListEl){
+    const spNames = Array.from(new Set(entries.map(e => (e.salesPerson||'').trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+    invoiceSalesPersonListEl.innerHTML = spNames.map(n => `<option value="${escapeHtml(n)}"></option>`).join('');
+  }
+  invoiceFormModalBackdrop.classList.add('open');
+}
+
+document.getElementById('addInvoiceBtn').addEventListener('click', ()=> openInvoiceForm(null));
+
+window.editInvoice = function(invoiceId){
+  const entry = entries.find(e => e.id === currentInvoicesEntryId);
+  if(!entry) return;
+  const invoice = (entry.invoices || []).find(i => i.id === invoiceId);
+  if(!invoice) return;
+  openInvoiceForm(invoice);
+};
+
+window.deleteInvoice = async function(invoiceId){
+  if(!confirm(t('confirmDeleteInvoice'))) return;
+  entries = entries.map(en => {
+    if(en.id !== currentInvoicesEntryId) return en;
+    return {...en, invoices: (en.invoices || []).filter(i => i.id !== invoiceId)};
+  });
+  await persist();
+  renderInvoicesTable();
+  render();
+  showToast(t('invoiceDeleted'));
+};
+
+document.getElementById('invoiceFormCancelBtn').addEventListener('click', ()=> invoiceFormModalBackdrop.classList.remove('open'));
+invoiceFormModalBackdrop.addEventListener('click', (e)=>{ if(e.target === invoiceFormModalBackdrop) invoiceFormModalBackdrop.classList.remove('open'); });
+
+invoiceForm.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const entryId = document.getElementById('invoiceEntryId').value;
+  const unit = document.getElementById('invoiceUnit').value;
+  const totalRaw = document.getElementById('invoiceTotal').value;
+  if(!unit){
+    showToast(t('validUnit'), true);
+    document.getElementById('invoiceUnit').focus();
+    return;
+  }
+  if(totalRaw === '' || isNaN(parseFloat(totalRaw))){
+    showToast(t('validInvoiceTotal'), true);
+    document.getElementById('invoiceTotal').focus();
+    return;
+  }
+  const invoiceId = document.getElementById('invoiceId').value;
+  const sumAmountRaw = document.getElementById('invoiceSumAmount').value;
+  const invoiceData = {
+    id: invoiceId || 'inv_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    unit: unit,
+    salesPerson: document.getElementById('invoiceSalesPerson').value.trim(),
+    date: document.getElementById('invoiceDate').value,
+    invoiceNo: document.getElementById('invoiceNo').value.trim(),
+    cdDueDate: document.getElementById('invoiceCdDueDate').value,
+    sumAmount: sumAmountRaw === '' ? 0 : parseFloat(sumAmountRaw) || 0,
+    total: parseFloat(totalRaw) || 0
+  };
+  entries = entries.map(en => {
+    if(en.id !== entryId) return en;
+    const existingInvoices = Array.isArray(en.invoices) ? en.invoices.slice() : [];
+    const updatedInvoices = invoiceId
+      ? existingInvoices.map(i => i.id === invoiceId ? invoiceData : i)
+      : [...existingInvoices, invoiceData];
+    return {...en, invoices: updatedInvoices};
+  });
+  await persist();
+  invoiceFormModalBackdrop.classList.remove('open');
+  renderInvoicesTable();
+  render();
+  showToast(t('invoiceSaved'));
+});
+
+document.getElementById('invoicesCloseBtn').addEventListener('click', ()=> invoicesModalBackdrop.classList.remove('open'));
+invoicesModalBackdrop.addEventListener('click', (e)=>{ if(e.target === invoicesModalBackdrop) invoicesModalBackdrop.classList.remove('open'); });
 
 document.getElementById('searchInput').addEventListener('input', render);
 
