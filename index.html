@@ -342,6 +342,7 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
   <table>
     <thead>
       <tr>
+        <th data-i18n="thUnit">Unit</th>
         <th data-i18n="thCompany">Company</th>
         <th data-i18n="thContactPerson">Contact Person</th>
         <th data-i18n="thSalesPersonName">Sales Person</th>
@@ -370,6 +371,16 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
       <input type="hidden" id="entryId">
       <div class="form-grid">
         <div class="field full"><label data-i18n="companyNameLabel">Company Name *</label><input id="companyName"></div>
+        <div class="field"><label data-i18n="unitLabel">Unit</label>
+          <div style="display:flex; gap:18px; align-items:center; height:40px;">
+            <label style="display:flex; align-items:center; gap:6px; font-weight:500; text-transform:none; letter-spacing:normal; font-size:13.5px; color:var(--text-primary);">
+              <input type="checkbox" id="companyUnitI" style="width:16px; height:16px; accent-color:var(--violet);"> <span data-i18n="unitI">Unit I</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; font-weight:500; text-transform:none; letter-spacing:normal; font-size:13.5px; color:var(--text-primary);">
+              <input type="checkbox" id="companyUnitII" style="width:16px; height:16px; accent-color:var(--violet);"> <span data-i18n="unitII">Unit II</span>
+            </label>
+          </div>
+        </div>
         <div class="field"><label data-i18n="contactPersonLabel">Contact Person Name</label><input id="contactName" data-i18n-placeholder="contactNamePh" placeholder="e.g. Rahul Sharma"></div>
         <div class="field"><label data-i18n="mobileLabel">Mobile Number</label><input id="contactMobile" type="tel" data-i18n-placeholder="mobilePh" placeholder="e.g. 9876543210"></div>
         <div class="field"><label data-i18n="salesPersonLabel">Sales Person</label><input id="salesPerson" list="salesPersonList" data-i18n-placeholder="salesPersonPh" placeholder="e.g. Rajesh Kumar"><datalist id="salesPersonList"></datalist></div>
@@ -475,7 +486,6 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
       <table>
         <thead>
           <tr>
-            <th data-i18n="thUnit">Unit</th>
             <th data-i18n="thSalesPersonName">Sales Person</th>
             <th data-i18n="thInvoiceDate">Date</th>
             <th data-i18n="thInvoiceNo">Invoice No.</th>
@@ -501,16 +511,6 @@ tbody tr.overdue{ box-shadow:inset 3px 0 0 var(--danger); }
       <input type="hidden" id="invoiceId">
       <input type="hidden" id="invoiceEntryId">
       <div class="form-grid">
-        <div class="field"><label data-i18n="unitLabel">Unit *</label>
-          <div style="display:flex; gap:18px; align-items:center; height:40px;">
-            <label style="display:flex; align-items:center; gap:6px; font-weight:500; text-transform:none; letter-spacing:normal; font-size:13.5px; color:var(--text-primary);">
-              <input type="checkbox" id="invoiceUnitI" style="width:16px; height:16px; accent-color:var(--violet);"> <span data-i18n="unitI">Unit I</span>
-            </label>
-            <label style="display:flex; align-items:center; gap:6px; font-weight:500; text-transform:none; letter-spacing:normal; font-size:13.5px; color:var(--text-primary);">
-              <input type="checkbox" id="invoiceUnitII" style="width:16px; height:16px; accent-color:var(--violet);"> <span data-i18n="unitII">Unit II</span>
-            </label>
-          </div>
-        </div>
         <div class="field"><label data-i18n="salesPersonLabel">Sales Person</label><input id="invoiceSalesPerson" list="invoiceSalesPersonList" data-i18n-placeholder="salesPersonPh" placeholder="e.g. Rajesh Kumar"><datalist id="invoiceSalesPersonList"></datalist></div>
         <div class="field"><label data-i18n="invoiceDateLabel">Date</label><input id="invoiceDate" type="date"></div>
         <div class="field"><label data-i18n="invoiceNoLabel">Invoice No.</label><input id="invoiceNo" data-i18n-placeholder="invoiceNoPh" placeholder="e.g. INV-1023"></div>
@@ -798,7 +798,7 @@ const translations = {
     thCdDueDate: 'CD Due Date',
     thSumAmount: 'Sum Amount',
     thInvoiceTotal: 'Total',
-    unitLabel: 'Unit *',
+    unitLabel: 'Unit',
     selectUnitPh: 'Select Unit',
     unitI: 'Unit I',
     unitII: 'Unit II',
@@ -967,7 +967,7 @@ const translations = {
     thCdDueDate: 'CD ड्यू डेट',
     thSumAmount: 'सम राशि',
     thInvoiceTotal: 'कुल',
-    unitLabel: 'यूनिट *',
+    unitLabel: 'यूनिट',
     selectUnitPh: 'यूनिट चुनें',
     unitI: 'यूनिट I',
     unitII: 'यूनिट II',
@@ -1227,7 +1227,7 @@ function renderDueReminders(){
 }
 
 async function loadEntries(){
-  tableBody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--text-secondary);">' + t('loading') + '</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:30px;color:var(--text-secondary);">' + t('loading') + '</td></tr>';
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     entries = raw ? JSON.parse(raw) : [];
@@ -1245,6 +1245,9 @@ function openModal(entry){
   document.getElementById('modalTitle').textContent = entry ? t('editCompanyTitle') : t('newCompanyTitle');
   document.getElementById('entryId').value = entry ? entry.id : '';
   document.getElementById('companyName').value = entry ? entry.companyName : '';
+  const companyUnitArr = entry ? unitArrayFrom(entry.unit) : [];
+  document.getElementById('companyUnitI').checked = companyUnitArr.includes('I');
+  document.getElementById('companyUnitII').checked = companyUnitArr.includes('II');
   document.getElementById('contactName').value = entry ? (entry.contactName || '') : '';
   document.getElementById('contactMobile').value = entry ? (entry.contactMobile || '') : '';
   document.getElementById('salesPerson').value = entry ? (entry.salesPerson || '') : '';
@@ -1322,9 +1325,14 @@ entryForm.addEventListener('submit', async (e)=>{
     }
   }
 
+  const companyUnitArrToSave = [];
+  if(document.getElementById('companyUnitI').checked) companyUnitArrToSave.push('I');
+  if(document.getElementById('companyUnitII').checked) companyUnitArrToSave.push('II');
+
   const data = {
     id: editingId || 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
     companyName: companyName,
+    unit: companyUnitArrToSave,
     contactName: document.getElementById('contactName').value.trim(),
     contactMobile: document.getElementById('contactMobile').value.trim(),
     salesPerson: document.getElementById('salesPerson').value.trim(),
@@ -1459,6 +1467,7 @@ function render(){
     }
     return `
       <tr class="${rowClass}">
+        <td>${unitLabelFor(e.unit)}</td>
         <td><div class="cust-name">${escapeHtml(e.companyName)}</div></td>
         <td>${e.contactName ? escapeHtml(e.contactName) : '<span style="color:var(--text-secondary)">—</span>'}</td>
         <td>${e.salesPerson ? escapeHtml(e.salesPerson) : '<span style="color:var(--text-secondary)">—</span>'}</td>
@@ -1558,12 +1567,11 @@ function renderInvoicesTable(){
   if(!entry){ invoicesTableBody.innerHTML = ''; return; }
   const list = (Array.isArray(entry.invoices) ? entry.invoices.slice() : []).sort((a,b)=> (a.date||'').localeCompare(b.date||''));
   if(list.length === 0){
-    invoicesTableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:22px; color:var(--text-secondary);">${t('noInvoicesYet')}</td></tr>`;
+    invoicesTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:22px; color:var(--text-secondary);">${t('noInvoicesYet')}</td></tr>`;
     return;
   }
   invoicesTableBody.innerHTML = list.map(inv => `
     <tr>
-      <td>${unitLabelFor(inv.unit)}</td>
       <td>${inv.salesPerson ? escapeHtml(inv.salesPerson) : '<span style="color:var(--text-secondary)">—</span>'}</td>
       <td>${inv.date ? escapeHtml(inv.date) : '<span style="color:var(--text-secondary)">—</span>'}</td>
       <td>${inv.invoiceNo ? escapeHtml(inv.invoiceNo) : '<span style="color:var(--text-secondary)">—</span>'}</td>
@@ -1584,9 +1592,6 @@ function openInvoiceForm(invoice){
   document.getElementById('invoiceFormModalTitle').textContent = invoice ? t('editInvoiceTitle') : t('newInvoiceTitle');
   document.getElementById('invoiceId').value = invoice ? invoice.id : '';
   document.getElementById('invoiceEntryId').value = currentInvoicesEntryId || '';
-  const invoiceUnitArr = invoice ? unitArrayFrom(invoice.unit) : [];
-  document.getElementById('invoiceUnitI').checked = invoiceUnitArr.includes('I');
-  document.getElementById('invoiceUnitII').checked = invoiceUnitArr.includes('II');
   document.getElementById('invoiceSalesPerson').value = invoice ? (invoice.salesPerson || '') : '';
   document.getElementById('invoiceDate').value = invoice ? (invoice.date || '') : '';
   document.getElementById('invoiceNo').value = invoice ? (invoice.invoiceNo || '') : '';
@@ -1629,15 +1634,7 @@ invoiceFormModalBackdrop.addEventListener('click', (e)=>{ if(e.target === invoic
 invoiceForm.addEventListener('submit', async (e)=>{
   e.preventDefault();
   const entryId = document.getElementById('invoiceEntryId').value;
-  const unitArr = [];
-  if(document.getElementById('invoiceUnitI').checked) unitArr.push('I');
-  if(document.getElementById('invoiceUnitII').checked) unitArr.push('II');
   const totalRaw = document.getElementById('invoiceTotal').value;
-  if(unitArr.length === 0){
-    showToast(t('validUnit'), true);
-    document.getElementById('invoiceUnitI').focus();
-    return;
-  }
   if(totalRaw === '' || isNaN(parseFloat(totalRaw))){
     showToast(t('validInvoiceTotal'), true);
     document.getElementById('invoiceTotal').focus();
@@ -1647,7 +1644,6 @@ invoiceForm.addEventListener('submit', async (e)=>{
   const sumAmountRaw = document.getElementById('invoiceSumAmount').value;
   const invoiceData = {
     id: invoiceId || 'inv_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
-    unit: unitArr,
     salesPerson: document.getElementById('invoiceSalesPerson').value.trim(),
     date: document.getElementById('invoiceDate').value,
     invoiceNo: document.getElementById('invoiceNo').value.trim(),
